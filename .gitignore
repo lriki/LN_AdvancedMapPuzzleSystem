@@ -6,10 +6,9 @@ icon/*
 img/*
 movies/*
 save/*
-js/*
 
 !img/characters
-!js/plugins
+
 
 
 

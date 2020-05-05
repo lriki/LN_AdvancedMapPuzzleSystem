@@ -1,10 +1,13 @@
 
 const webpack = require('webpack');
 const fs = require('fs');
+const UglifyJsPlugin = require("uglifyjs-webpack-plugin");
+
+const METADATA = fs.readFileSync("./header.txt").toString();
 
 module.exports = {
-    //mode: 'production',
-    mode: 'development',
+    mode: 'production',
+    //mode: 'development',
     entry: './ts/index.ts', //ファイルをまとめる際のエントリーポイント
     output: {
         path: __dirname,
@@ -21,15 +24,22 @@ module.exports = {
             }
         ]
     },
+    optimization: {
+        minimizer: [
+            new UglifyJsPlugin({
+                uglifyOptions: {
+                    output: {
+                        beautify: false,
+                        preamble: METADATA,
+                    },
+                },
+            }),
+        ],
+    },
     plugins: [
         new webpack.BannerPlugin(
             {
-                banner: fs.readFileSync("./header.txt").toString(),
-                //(v) => {
-                 //   let text = fs.readFileSync("./header.txt");
-                 //   console.log(text);
-                 //   return;
-                //},
+                banner: METADATA,
                 raw: true,
                 entryOnly: true
             }
