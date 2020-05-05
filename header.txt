@@ -1,0 +1,26 @@
+//=============================================================================
+// LN_AdvancedMapPuzzleSystem.js
+// ----------------------------------------------------------------------------
+// Copyright (c) 2020 lriki
+// This software is released under the MIT License.
+// http://opensource.org/licenses/mit-license.php
+// ----------------------------------------------------------------------------
+// [GitHub] : https://github.com/lriki/LN_AdvancedMapPuzzleSystem
+// [Twitter]: https://twitter.com/lriki8
+//=============================================================================
+
+/*:ja
+ * @plugindesc 謎解きマップシステムプラグイン v0.1.0
+ * @author lriki
+ * 
+ * @param GuideLineTerrainTag
+ * @desc 箱オブジェクトの移動ガイドラインとなる地形タグです。
+ * @default 7
+ * @type number
+ *
+ * @help マップ上のキャラクター移動やイベントシステムを拡張し、
+ * 謎解きの幅を広げるための様々な機能を追加します。
+ * 
+ * MIT License
+ */
+ 
