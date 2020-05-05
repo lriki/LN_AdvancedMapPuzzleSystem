@@ -279,7 +279,7 @@ export class MovingHelper {
      * 移動かジャンプかは length で指定(1=移動 2=ジャンプ)
      * @param ignoreMapPassable: 基本は false。true は崖から落下したオブジェクトを別のオブジェクトに乗せるときの確認に使う。
      */
-    static checkMoveOrJumpGroundToObject(x: number, y: number, d: number, length: number, ignoreMapPassable: boolean) {
+    static checkMoveOrJumpGroundToObject(x: number, y: number, d: number, length: number, ignoreMapPassable: boolean): Game_CharacterBase | undefined {
         var x1 = Math.round(x);
         var y1 = Math.round(y);
         // 移動先座標を求める
@@ -289,7 +289,7 @@ export class MovingHelper {
         if (!ignoreMapPassable) {
             if ($gameMap.isPassable(x1, y1, d)) {
                 // 現在位置から移動できるなら崖ではない
-                return null;
+                return undefined;
             }
         }
 
@@ -299,7 +299,7 @@ export class MovingHelper {
             return obj;
         }
 
-        return null;
+        return undefined;
     };
 
     /**

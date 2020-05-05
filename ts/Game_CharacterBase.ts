@@ -32,6 +32,7 @@ declare global {
         ridding(): boolean;
         falling(): boolean;
         isMapObject(): boolean;
+        objectId(): number;
         objectHeight(): number;
         canRide(): boolean;
         riddingObject(): Game_CharacterBase | undefined;
@@ -42,7 +43,10 @@ declare global {
         attemptMoveGroundToGround(d: number): boolean;
         attemptJumpGroundToGround(d: number): boolean;
         attemptJumpGroove(d: number): boolean;
+        attemptMoveGroundToObject(d: number, ignoreMapPassable: boolean): boolean;
 
+        rideToObject(riddenObject: Game_CharacterBase): void;
+        moveToDir(d: number, withAjust: boolean): void;
         jumpToDir(d: number, len: number, toObj: boolean): void;
         resetGetOnOffParams(): void;
 
@@ -125,8 +129,15 @@ Game_CharacterBase.prototype.isMapObject = function() {
     return false;
 };
 
+/**
+ * Player は 0. イベントは EventId
+ */
+Game_CharacterBase.prototype.objectId = function(): number {
+    return -1;
+};
+
 // マップオブジェクトとしての高さ。
-// 高さを持たないのは -1。（GSObject ではない）
+// 高さを持たないのは -1。
 Game_CharacterBase.prototype.objectHeight = function() {
     return -1;
 };
@@ -197,6 +208,9 @@ Game_CharacterBase.prototype.screenZ = function() {
     return base + jumpZ;
 };
 
+//------------------------------------------------------------------------------
+// 移動メイン & 試行
+
 /**
  * ジャンプやオブジェクトへの乗降を伴う移動のメイン処理。
  * オブジェクトを押すなど、他イベントへ影響するような処理は行わない。あくまで自分自身の移動に関係する処理を行う。
@@ -233,9 +247,9 @@ Game_CharacterBase.prototype.moveStraightMain = function(d: number) {
         }
         else if (this.attemptJumpGroove(d)) {
         }
-        /*
-        else if (this.tryMoveGroundToObject(d, false)) {
+        else if (this.attemptMoveGroundToObject(d, false)) {
         }
+        /*
         else if (this.tryJumpGroundToObject(d)) {
         }
         */
@@ -245,7 +259,7 @@ Game_CharacterBase.prototype.moveStraightMain = function(d: number) {
 /**
  * Ground > Ground (普通の移動)
  */
-Game_CharacterBase.prototype.attemptMoveGroundToGround = function(d: number) {
+Game_CharacterBase.prototype.attemptMoveGroundToGround = function(d: number): boolean {
 
     var oldX = this._x;
     var oldY = this._y;
@@ -269,7 +283,7 @@ Game_CharacterBase.prototype.attemptMoveGroundToGround = function(d: number) {
 /**
  * Jump: Ground > Ground (エッジ)
  */
-Game_CharacterBase.prototype.attemptJumpGroundToGround = function(d) {
+Game_CharacterBase.prototype.attemptJumpGroundToGround = function(d): boolean {
     if (MovingHelper.canPassJumpGroundToGround(this, this._x, this._y, d)) {
         this.setMovementSuccess(true);
         this.jumpToDir(d, 2, false);
@@ -282,7 +296,7 @@ Game_CharacterBase.prototype.attemptJumpGroundToGround = function(d) {
 /**
  * Jump: Ground > Ground (溝)
  */
-Game_CharacterBase.prototype.attemptJumpGroove = function(d: number) {
+Game_CharacterBase.prototype.attemptJumpGroove = function(d: number): boolean {
     if (MovingHelper.canPassJumpGroove(this, this._x, this._y, d)) {
         this.setMovementSuccess(true);
         this.jumpToDir(d, 2, false);
@@ -292,8 +306,62 @@ Game_CharacterBase.prototype.attemptJumpGroove = function(d: number) {
     return false;
 }
 
+/**
+ * Move: Ground > Object
+ * @param ignoreMapPassable: 基本は false。true は崖から落下したオブジェクトを別のオブジェクトに乗せるときの確認に使う。
+ */
+Game_CharacterBase.prototype.attemptMoveGroundToObject = function(d: number, ignoreMapPassable: boolean): boolean {
+    var obj = MovingHelper.checkMoveOrJumpGroundToObject(this._x, this._y, d, 1, ignoreMapPassable);
+    if (obj) {
+        this.setMovementSuccess(true);
+        // 乗る
+        this.resetGetOnOffParams();
+        this.moveToDir(d, true);
+        this.rideToObject(obj);
+        this._movingMode = MovingMode.GroundToObject;
+        return true;
+    }
+    return false;
+}
+
 //------------------------------------------------------------------------------
 // 実際に移動を行う系
+
+/**
+ * この Character を、指定したオブジェクトへ乗せる
+ */
+Game_CharacterBase.prototype.rideToObject = function(riddenObject: Game_CharacterBase) {
+    assert(this.objectId() >= 0);
+    assert(riddenObject.objectId() >= 0);
+
+    this._ridingCharacterId = riddenObject.objectId();
+    riddenObject._ridderCharacterId = this.objectId();
+
+    var oldZ = this._ridingScreenZPriority;
+    this._ridingScreenZPriority = -1;
+    this._ridingScreenZPriority = this.screenZ();
+
+    // high obj -> low obj のとき、移動始めに隠れてしまう対策
+    this._ridingScreenZPriority = Math.max(this._ridingScreenZPriority, oldZ);
+};
+
+/**
+ * 方向を指定して移動開始
+ */
+Game_CharacterBase.prototype.moveToDir = function(d: number, withAjust: boolean) {
+    this._x = $gameMap.roundXWithDirection(this._x, d);
+    this._y = $gameMap.roundYWithDirection(this._y, d);
+    this._realX = $gameMap.xWithDirection(this._x, this.reverseDir(d));
+    this._realY = $gameMap.yWithDirection(this._y, this.reverseDir(d));
+
+    //var y = this._y;
+    if (withAjust || this._forcePositionAdjustment) {
+        this._y = Math.round(this._y);
+    }
+    if (this._forcePositionAdjustment) {
+        this._x = Math.round(this._x);
+    }
+}
 
 /**
  * 方向と距離を指定してジャンプ開始
