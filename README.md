@@ -5,7 +5,7 @@
 
 ※元ネタは [黄金の太陽シリーズ](https://ja.wikipedia.org/wiki/%E9%BB%84%E9%87%91%E3%81%AE%E5%A4%AA%E9%99%BD) の謎解きシステムです。
 
-ダウンロード： [LN_AdvancedMapPuzzleSystem.js](https://raw.githubusercontent.com/lriki/LN_AdvancedMapPuzzleSystem/master/js/plugins/LN_AdvancedMapPuzzleSystem.js)
+:arrow_down: ダウンロード： [LN_AdvancedMapPuzzleSystem.js](https://raw.githubusercontent.com/lriki/LN_AdvancedMapPuzzleSystem/master/js/plugins/LN_AdvancedMapPuzzleSystem.js)
 
 
 **開発状況について**
