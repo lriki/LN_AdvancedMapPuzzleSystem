@@ -17,6 +17,8 @@
 
 未実装の機能は ![ToDo](http://img.shields.io/badge/status-ToDo-red.svg?style=flat) でマークされています。
 
+プラグインを変更する場合は [開発ガイド](docs/Development.md) を参照してください。
+
 **不具合情報について**
 
 既知の問題や修正済みの問題については次のリンク先をご確認ください。
