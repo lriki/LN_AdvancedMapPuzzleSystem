@@ -11,7 +11,7 @@
     },
     "scripts": {
         "start": "webpack --watch",
-        "webpack": "webpack"
+        "build": "webpack"
     },
     "dependencies": {
         "rpgmakermv_typescript_dts": "^1.5.2"
