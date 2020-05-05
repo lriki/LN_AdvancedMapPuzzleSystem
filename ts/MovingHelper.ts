@@ -116,13 +116,68 @@ export class MovingHelper {
     }
 
     /**
+     * 向かいの2マス先のタイルへジャンプできるか（エッジタイル同士）
+     */
+    static canPassJumpGroundToGround = function(character: Game_CharacterBase, x: number, y: number, d: number): boolean {
+        var x1 = Math.round(x);
+        var y1 = Math.round(y);
+        var x2 = Math.round(MovingHelper.roundXWithDirectionLong(x, d, 2));
+        var y2 = Math.round(MovingHelper.roundYWithDirectionLong(y, d, 2));
+
+        if (d == 2 || d == 8) {
+            var nearYOffset = y - Math.floor(y);
+            var jumpLen = 2 - nearYOffset;
+
+            if (MovingHelper.isHalfStepX(character)) {
+                // HalfMove.js の対策。
+                // X半歩状態での上下移動は、移動先隣接2タイルをチェックする。
+                // 両方移動可能ならOK
+    
+                var r1 = MovingHelper.checkJumpGroundToGroundInternal(character, x - 1.0, y, d, jumpLen);
+                var r2 = MovingHelper.checkJumpGroundToGroundInternal(character, x, y, d, jumpLen);
+                if (!r1.pass || !r2.pass) {
+                    return false;
+                }
+    
+                return r2.pass;
+            }
+
+            return MovingHelper.checkJumpGroundToGroundInternal(character, x, y, d, jumpLen).pass;
+        }
+        else if (MovingHelper.isHalfStepY(character) && (d == 4 || d == 6)) {
+            // HalfMove.js の対策。
+            // Y半歩状態での左右移動。
+            // シナリオ上とおせんぼに使いたいイベントの後ろへジャンプ移動できてしまう問題の対策。
+            
+            var r1 = MovingHelper.checkJumpGroundToGroundInternal(character, x, y, d, 2);
+            if (!r1.pass) {
+                // 普通に移動できなかった
+                return false;
+            }
+
+            var iToX = r1.x;
+            var iToY = Math.ceil(r1.y);
+            if (character.isCollidedWithCharacters(iToX, iToY)) {
+                // ceil した移動先（+0.5）にキャラクターがいる
+
+                var r2 = MovingHelper.checkJumpGroundToGroundInternal(character, Math.round(x), iToY - 1, d, 2);
+                if (!r2.pass) {
+                    // 移動できなかった
+                return false;
+                }
+            }
+
+            return r1.pass;
+        }
+
+        return MovingHelper.checkJumpGroundToGroundInternal(character, x, y, d, 2).pass;
+    }
+
+    /**
      * 1マス前のタイルは溝であり、向かいの2マス先のタイルへジャンプできるか
      */
     static canPassJumpGroove(character: Game_CharacterBase, x: number, y: number, d: number): boolean {
-            
-        console.log('canPassJumpGroove');
-        console.log(character);
-        
+                    
         if (d == 2 || d == 8) {
             if (MovingHelper.isHalfStepX(character)) {
                 // 上下移動については HalfMove.js の対策をつける。
@@ -143,7 +198,6 @@ export class MovingHelper {
     }
 
     static canPassJumpGrooveInternal(character: Game_CharacterBase, x: number, y: number, d: number): boolean {
-        console.log('canPassJumpGrooveInternal');
         var x1 = Math.round(x);
         var y1 = Math.round(y);
         var x2 = Math.round(MovingHelper.roundXWithDirectionLong(x, d, 2));
@@ -152,35 +206,24 @@ export class MovingHelper {
         var y3 = Math.round(MovingHelper.roundYWithDirectionLong(y, d, 1));
         var toX = MovingHelper.roundXWithDirectionLong(x, d, 2);
         var toY = MovingHelper.roundYWithDirectionLong(y, d, 2);
-        console.log(x, y, x1, y1);
-        console.log(x2, y2);
-        console.log(x3, y3);
         if (!$gameMap.isValid(x2, y2)) {
-            console.log('1');
             // マップ外
             return false;
         }
-        if (!$gameMap.isPassable(x1, y1, d))
-        {
-            console.log('2');
+        if (!$gameMap.isPassable(x1, y1, d)) {
             // 現在位置から移動できない
             return false;
         }
         var d2 = character.reverseDir(d);
-        if (!$gameMap.isPassable(x2, y2, d2))
-        {
-            console.log('3');
+        if (!$gameMap.isPassable(x2, y2, d2)) {
             // 移動先から手前に移動できない
             return false;
         }
         if (character.isCollidedWithCharacters(toX, toY)) {
-            console.log('4');
             // 移動先にキャラクターがいる
             return false;
         }
-        console.log($gameMap.checkGroove);
         if (!$gameMap.checkGroove(x3, y3)) {
-            console.log('5');
             // 目の前のタイルが溝ではない
             return false;
         }

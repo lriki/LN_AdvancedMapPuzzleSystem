@@ -1,6 +1,7 @@
 /// <reference types="rpgmakermv_typescript_dts"/>
 import { assert, ObjectType } from './Common'
 import { MovingHelper } from './MovingHelper'
+import { AMPS_SoundManager } from "./SoundManager";
 
 const JUMP_WAIT_COUNT   = 10;
 
@@ -39,6 +40,7 @@ declare global {
 
         moveStraightMain(d: number): void;
         attemptMoveGroundToGround(d: number): boolean;
+        attemptJumpGroundToGround(d: number): boolean;
         attemptJumpGroove(d: number): boolean;
 
         jumpToDir(d: number, len: number, toObj: boolean): void;
@@ -227,8 +229,8 @@ Game_CharacterBase.prototype.moveStraightMain = function(d: number) {
     else {
         if (this.attemptMoveGroundToGround(d)) {
         }
-        //else if (this.tryJumpGroundToGround(d)) {
-        //}
+        else if (this.attemptJumpGroundToGround(d)) {
+        }
         else if (this.attemptJumpGroove(d)) {
         }
         /*
@@ -261,6 +263,19 @@ Game_CharacterBase.prototype.attemptMoveGroundToGround = function(d: number) {
         return true;
     }
 
+    return false;
+}
+
+/**
+ * Jump: Ground > Ground (エッジ)
+ */
+Game_CharacterBase.prototype.attemptJumpGroundToGround = function(d) {
+    if (MovingHelper.canPassJumpGroundToGround(this, this._x, this._y, d)) {
+        this.setMovementSuccess(true);
+        this.jumpToDir(d, 2, false);
+        this._movingMode = MovingMode.GroundToGround;
+        return true;
+    }
     return false;
 }
 
@@ -307,7 +322,7 @@ Game_CharacterBase.prototype.jumpToDir = function(d: number, len: number, toObj:
     this.jump(x2 - x1, y2 - y1);
     this._waitAfterJump = JUMP_WAIT_COUNT;
     this._extraJumping = true;
-    //SoundManager.playGSJump();
+    AMPS_SoundManager.playGSJump();
 }
 
 /**
