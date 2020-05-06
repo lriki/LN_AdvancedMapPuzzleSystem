@@ -7,7 +7,15 @@
 
 ダウンロード： [:arrow_down: LN_AdvancedMapPuzzleSystem.js](https://raw.githubusercontent.com/lriki/LN_AdvancedMapPuzzleSystem/master/js/plugins/LN_AdvancedMapPuzzleSystem.js)
 
+**ダウンロード**
+
+[:arrow_down: ![ToDo](http://img.shields.io/badge/Download-LN_AdvancedMapPuzzleSystem.js-green.svg?style=flat)](https://raw.githubusercontent.com/lriki/LN_AdvancedMapPuzzleSystem/master/js/plugins/LN_AdvancedMapPuzzleSystem.js)
+
+
+
 [Gallery ページ](docs/gallery.md) でサンプルの画面を見ることができます。
+
+----------
 
 **開発状況について**
 
@@ -29,7 +37,7 @@
 
 
 目次
---------------------
+----------
 
 <!-- TOC orderedList:true -->
 
