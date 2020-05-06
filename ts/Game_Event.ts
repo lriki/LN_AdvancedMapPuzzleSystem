@@ -64,27 +64,28 @@ Game_Event.prototype.parseListCommentForAMPSObject = function(): boolean {
     this._fallable = false;
     this._eventTrigger = EventTrigger.None;
 
-    var list = this.list().parameters;
-    if (list && list.length > 1) {
-
+    let list = this.list();
+    if (list) {
         // collect comments
-        var comments = "";
-        for (var i = 0; i < list.length; i++) {
+        let comments = "";
+        for (let i = 0; i < list.length; i++) {
             if (list[i].code == 108 || list[i].code == 408) {
-                comments += list[i].parameters[0];
+                if (list[i].parameters) {
+                    comments += list[i].parameters;
+                }
             }
         }
 
-        var index = comments.indexOf("@MapObject");
+        let index = comments.indexOf("@MapObject");
         if (index >= 0) {
-            var block = comments.substring(index + 6);
+            let block = comments.substring(index + 6);
             block = block.substring(
-                block.indexOf("{") + 1,
-                block.indexOf("}"));
+            block.indexOf("{") + 1,
+            block.indexOf("}"));
 
-            var nvps = block.split(",");
-            for (var i = 0; i < nvps.length; i++) {
-                var tokens = nvps[i].split(":");
+            let nvps = block.split(",");
+            for (let i = 0; i < nvps.length; i++) {
+                let tokens = nvps[i].split(":");
                 switch (tokens[0].trim())
                 {
                     case "type":

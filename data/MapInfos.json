@@ -2,6 +2,10 @@
 null,
 {"id":1,"expanded":true,"name":"Demo","order":1,"parentId":0,"scrollX":819,"scrollY":461},
 {"id":2,"expanded":false,"name":"Sample","order":2,"parentId":0,"scrollX":819,"scrollY":461},
-{"id":3,"expanded":true,"name":"Test","order":3,"parentId":0,"scrollX":819,"scrollY":461},
-{"id":4,"expanded":false,"name":"Test-ジャンプ（ホール）","order":4,"parentId":3,"scrollX":0,"scrollY":0}
+{"id":3,"expanded":true,"name":"Test-基本移動","order":4,"parentId":0,"scrollX":819,"scrollY":461},
+{"id":4,"expanded":false,"name":"Test-ジャンプ（ホール）","order":5,"parentId":3,"scrollX":819,"scrollY":461},
+{"id":5,"expanded":false,"name":"Test-ジャンプ（エッジ）","order":6,"parentId":3,"scrollX":811,"scrollY":461},
+{"id":6,"expanded":false,"name":"Sample2","order":3,"parentId":2,"scrollX":811,"scrollY":739},
+{"id":7,"expanded":true,"name":"Test-マップオブジェクト","order":7,"parentId":0,"scrollX":819,"scrollY":461},
+{"id":8,"expanded":false,"name":"Box-Static","order":8,"parentId":7,"scrollX":811,"scrollY":453}
 ]

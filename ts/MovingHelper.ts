@@ -46,6 +46,26 @@ export class MovingHelper {
      * ちなみにこれ系の "round" は マップのループ対応のための繰り返しを意味する
      */
     static roundXWithDirectionLong(x: number, d: number, len: number) {
+        
+        /*
+        // まずは 1 マス先を取得
+        var dx = $gameMap.roundXWithDirection(x, d);
+
+        // len 分だけ処理を繰り返して先に進める
+        var ic = Math.floor(len);
+        for (var i = 0; i < ic - 1; i++) {
+            dx = $gameMap.roundXWithDirection(dx, d);
+        }
+
+        // 端数分の処理
+        var f = len - Math.floor(len);
+        if (f > 0) {
+            dx += $gameMap.roundXWithDirection(0, d) * f;
+        }
+
+        return dx;
+        */
+
         // まずは 1 マス先を取得
         var dx = MovingHelper.roundXWithDirection(x, d);
 
@@ -68,6 +88,25 @@ export class MovingHelper {
      * see: roundXWithDirectionLong
      */
     static roundYWithDirectionLong(y: number, d: number, len: number) {
+        /*
+        // まずは 1 マス先を取得
+        var dy = $gameMap.roundYWithDirection(y, d);
+
+        // len 分だけ処理を繰り返して先に進める
+        var ic = Math.floor(len);
+        for (var i = 0; i < ic - 1; i++) {
+            dy = $gameMap.roundYWithDirection(dy, d);
+        }
+
+        // 端数分の処理
+        var f = len - Math.floor(len);
+        if (f > 0) {
+            dy += $gameMap.roundYWithDirection(0, d) * f;
+        }
+        
+        return dy;
+        */
+
         // まずは 1 マス先を取得
         var dy = MovingHelper.roundYWithDirection(y, d);
 
@@ -358,7 +397,7 @@ export class MovingHelper {
     static isCollidedWithRiddingEvents(x: number, y: number) {
         var events = $gameMap.eventsXyNt(x, y);
         return events.some(function(event) {
-            return event.ridding();
+            return event.isRidding();
         });
     };
 

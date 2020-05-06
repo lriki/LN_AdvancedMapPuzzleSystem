@@ -29,7 +29,7 @@ declare global {
         _getonoffStartX: number;        // オブジェクト乗降時の移動モーションが不自然に見えないように補間したりするパラメータ
         _getonoffStartY: number;        // オブジェクト乗降時の移動モーションが不自然に見えないように補間したりするパラメータ
 
-        ridding(): boolean;
+        isRidding(): boolean;
         falling(): boolean;
         isMapObject(): boolean;
         objectId(): number;
@@ -102,20 +102,25 @@ Game_CharacterBase.prototype.moveStraight = function (d: number) {
  */
 var _Game_CharacterBase_moveDiagonally = Game_CharacterBase.prototype.moveDiagonally;
 Game_CharacterBase.prototype.moveDiagonally = function (horz: number, vert: number): void {
-    //if (this.ridding()) {
-    // 何かのオブジェクトに乗っている。
-    // オリジナルの処理を含め、移動処理は行わない。
-    //  }
-    //else {
-    _Game_CharacterBase_moveDiagonally.call(this, horz, vert);
-    //}
+    if (this.isRidding()) {
+        // 何かのオブジェクトに乗っている。
+        // オリジナルの処理を含め、移動処理は行わない。
+        // （もしここで無視しないと、HalfMove.js などで、オブジェクトに乗っているときに斜め移動を入力すると、通常の移動扱いになって見かけ上オブジェクトから降りてしまう）
+    }
+    else {
+        _Game_CharacterBase_moveDiagonally.call(this, horz, vert);
+    }
 };
 
 /**
  * 別のオブジェクトに乗っているか？
+ * 
+ * 半歩移動中の場合、
+ * - Ground -> Object への移動は、乗っているものとする。
+ * - Ground -> Object への移動は、乗っていない。
  */
-Game_CharacterBase.prototype.ridding = function(): boolean {
-    return false;
+Game_CharacterBase.prototype.isRidding = function(): boolean {
+    return this._ridingCharacterId >= 0;
 }
 
 /**
@@ -193,10 +198,9 @@ Game_CharacterBase.prototype.riddingObject = function(): Game_CharacterBase | un
 
 var _Game_CharacterBase_screenZ = Game_CharacterBase.prototype.screenZ;
 Game_CharacterBase.prototype.screenZ = function() {
-
     var base = _Game_CharacterBase_screenZ.call(this);
     var riddingObject = this.riddingObject();
-    if (this.ridding() && riddingObject) {
+    if (this.isRidding() && riddingObject) {
         base += riddingObject.screenZ();
     }
 
@@ -224,7 +228,7 @@ Game_CharacterBase.prototype.moveStraightMain = function(d: number) {
 
     this.setMovementSuccess(false);
 
-    if (this.ridding()) {
+    if (this.isRidding()) {
         // 何かのオブジェクトに乗っている。
         // オリジナルの処理を含め、移動処理は行わない。
         /*
@@ -403,7 +407,7 @@ Game_CharacterBase.prototype.updateJump = function() {
 
     _Game_CharacterBase_updateJump.call(this);
 
-    if (this.ridding() && oldJumping) {
+    if (this.isRidding() && oldJumping) {
         if (this._movingMode == MovingMode.GroundToObject || this._movingMode == MovingMode.ObjectToObject) {
             // オブジェクトへ乗ろうとしているときは補完を実施して自然に移動しているように見せる
             var obj = this.riddingObject();
@@ -416,7 +420,7 @@ Game_CharacterBase.prototype.updateJump = function() {
     
                 this._realX = MovingHelper.linear(t, this._getonoffStartX, tx - this._getonoffStartX, 1.0);
                 this._realY = MovingHelper.linear(t, this._getonoffStartY, ty - this._getonoffStartY, 1.0);
-    
+
                 // ここで論理座標も同期しておかないと、ジャンプ完了時の一瞬だけ画面が揺れる
                 this._x = obj._x;
                 this._y = obj._y - obj.objectHeight();
