@@ -103,6 +103,12 @@ Game_CharacterBase.prototype.initMembers = function() {
 var _Game_CharacterBase_moveStraight = Game_CharacterBase.prototype.moveStraight;
 Game_CharacterBase.prototype.moveStraight = function (d: number) {
     assert(d == 2 || d == 4 || d == 6 || d == 8);
+    
+    if (this._waitAfterJump > 0) {
+        this._waitAfterJump--;
+        return;
+    }
+
     this.moveStraightMain(d);
 };
 
@@ -230,10 +236,6 @@ Game_CharacterBase.prototype.screenZ = function() {
  * （他オブジェクトと関係して動くものは MovingBehavior で定義する）
  */
 Game_CharacterBase.prototype.moveStraightMain = function(d: number) {
-    if (this._waitAfterJump > 0) {
-        this._waitAfterJump--;
-        return;
-    }
 
     this.setMovementSuccess(false);
 
@@ -546,9 +548,6 @@ Game_CharacterBase.prototype.updateStop = function() {
 var _Game_CharacterBase_updateMove = Game_CharacterBase.prototype.updateMove;
 Game_CharacterBase.prototype.updateMove = function() {
     var oldMoving = this.isMoving();
-
-    console.log("updateMove");
-    console.log(this._x, this._realX);
 
     if (this.isMoving() &&
         this._movingMode != MovingMode.Stopping &&
