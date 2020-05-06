@@ -406,8 +406,8 @@ export class MovingHelper {
      */
     static findPassableRideObject(x: number, y: number): Game_CharacterBase | undefined {
         var events = $gameMap.events();
-        for(var i = 0; i < events.length; i++) {
-            if(events[i].checkPassRide(x, y)) {
+        for (var i = 0; i < events.length; i++) {
+            if (events[i].checkPassRide(x, y)) {
                 return events[i];
             };
         };
