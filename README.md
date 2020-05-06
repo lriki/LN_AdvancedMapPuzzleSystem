@@ -1,12 +1,13 @@
 謎解きマップシステムプラグイン v0.1.0
 ====================
 
-マップ上のキャラクター移動やイベントシステムを拡張し、謎解きの幅を広げるための様々な機能を追加します。
+マップ上のキャラクター移動やイベントシステムを拡張し、立体的な謎解きの幅を広げるための様々な機能を追加します。
 
 ※元ネタは [黄金の太陽シリーズ](https://ja.wikipedia.org/wiki/%E9%BB%84%E9%87%91%E3%81%AE%E5%A4%AA%E9%99%BD) の謎解きシステムです。
 
-:arrow_down: ダウンロード： [LN_AdvancedMapPuzzleSystem.js](https://raw.githubusercontent.com/lriki/LN_AdvancedMapPuzzleSystem/master/js/plugins/LN_AdvancedMapPuzzleSystem.js)
+ダウンロード： [:arrow_down: LN_AdvancedMapPuzzleSystem.js](https://raw.githubusercontent.com/lriki/LN_AdvancedMapPuzzleSystem/master/js/plugins/LN_AdvancedMapPuzzleSystem.js)
 
+[Gallery ページ](docs/gallery.md) でサンプルの画面を見ることができます。
 
 **開発状況について**
 
