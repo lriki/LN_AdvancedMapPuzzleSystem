@@ -33,8 +33,8 @@ enum MovingMode
 declare global {
     interface Game_CharacterBase {
         objectType: ObjectType;
-        _ridingCharacterId: number;
-        _ridderCharacterId: number;
+        _ridderCharacterId: number; // this に乗っているオブジェクト (this の上にあるオブジェクト)
+        _riddeeCharacterId: number; // this が乗っているオブジェクと (this の下にあるオブジェクト)
         _waitAfterJump: number;
         _extraJumping: boolean;     // AMPS によるジャンプかどうか。見た目上の問題を修正するため微調整を入れたりする。
         _ridingScreenZPriority: number;
@@ -62,8 +62,11 @@ declare global {
         attemptJumpGroundToGround(d: number): boolean;
         attemptJumpGroove(d: number): boolean;
         attemptMoveGroundToObject(d: number, ignoreMapPassable: boolean): boolean;
+        attemptJumpGroundToObject(d: number): boolean;
         attemptMoveObjectToGround(d: number): boolean;
         attemptMoveObjectToObject(d: number): boolean;
+        attemptJumpObjectToGround(d: number): boolean;
+        attemptJumpObjectToObject(d: number): boolean;
 
         rideToObject(riddenObject: Game_CharacterBase): void;
         unrideFromObject(): void;
@@ -82,8 +85,8 @@ var _Game_CharacterBase_initMembers = Game_CharacterBase.prototype.initMembers;
 Game_CharacterBase.prototype.initMembers = function() {
     _Game_CharacterBase_initMembers.call(this);
     this.objectType = ObjectType.Character;
-    this._ridingCharacterId = -1;
     this._ridderCharacterId = -1;
+    this._riddeeCharacterId = -1;
     this._waitAfterJump = 0;
     this._extraJumping = false;
     this._ridingScreenZPriority = -1;
@@ -135,7 +138,7 @@ Game_CharacterBase.prototype.moveDiagonally = function (horz: number, vert: numb
  * - Ground -> Object への移動は、乗っていない。
  */
 Game_CharacterBase.prototype.isRidding = function(): boolean {
-    return this._ridingCharacterId >= 0;
+    return this._riddeeCharacterId >= 0;
 }
 
 /**
@@ -200,14 +203,14 @@ Game_CharacterBase.prototype.rider = function(): Game_CharacterBase | undefined 
  */
 Game_CharacterBase.prototype.riddingObject = function(): Game_CharacterBase | undefined
 {
-    if (this._ridingCharacterId < 0) {
+    if (this._riddeeCharacterId < 0) {
         return undefined;
     }
-    else if (this._ridingCharacterId == 0) {
+    else if (this._riddeeCharacterId == 0) {
         return $gamePlayer;
     }
     else {
-        return $gameMap.event(this._ridingCharacterId);
+        return $gameMap.event(this._riddeeCharacterId);
     }
 }
 
@@ -248,10 +251,8 @@ Game_CharacterBase.prototype.moveStraightMain = function(d: number) {
         }
         else if (this.attemptMoveGroundToObject(d, false)) {
         }
-        /*
-        else if (this.tryJumpGroundToObject(d)) {
+        else if (this.attemptJumpGroundToObject(d)) {
         }
-        */
     }
     else {
         // 何かのオブジェクトに乗っている。
@@ -260,12 +261,10 @@ Game_CharacterBase.prototype.moveStraightMain = function(d: number) {
         }
         else if (this.attemptMoveObjectToObject(d)) {
         }
-        /*
-        else if (this.tryJumpObjectToGround(d)) {
+        else if (this.attemptJumpObjectToGround(d)) {
         }
-        else if (this.tryJumpObjectToObject(d)) {
+        else if (this.attemptJumpObjectToObject(d)) {
         }
-        */
         
         this.setDirection(d);
     }
@@ -339,6 +338,23 @@ Game_CharacterBase.prototype.attemptMoveGroundToObject = function(d: number, ign
 }
 
 /**
+ * Jump: Ground > Object
+ */
+Game_CharacterBase.prototype.attemptJumpGroundToObject = function(d: number): boolean {
+    var obj = MovingHelper.checkMoveOrJumpGroundToObject(this._x, this._y, d, 2, false);
+    if (obj) {
+        this.setMovementSuccess(true);
+        // 乗る
+        this.resetGetOnOffParams();
+        this.jumpToDir(d, 2, true);
+        this.rideToObject(obj);
+        this._movingMode = MovingMode.GroundToObject;
+        return true;
+    }
+    return false;
+};
+
+/**
  * Object > Ground (普通の移動)
  */
 Game_CharacterBase.prototype.attemptMoveObjectToGround = function(d: number): boolean {
@@ -385,6 +401,37 @@ Game_CharacterBase.prototype.attemptMoveObjectToObject = function(d: number): bo
     return false;
 }
 
+/**
+ * Jump: Object > Ground
+ */
+Game_CharacterBase.prototype.attemptJumpObjectToGround = function(d: number): boolean {
+    if (MovingHelper.checkMoveOrJumpObjectToGround(this, this._x, this._y, d, 2)) {
+        this.setMovementSuccess(true);
+        this.jumpToDir(d, 2, false);
+        this.unrideFromObject();
+        this._movingMode = MovingMode.ObjectToGround;
+        return true;
+    }
+    return false;
+}
+
+/**
+ * Jump: Object > Object
+ */
+Game_CharacterBase.prototype.attemptJumpObjectToObject = function(d: number): boolean {
+    var obj = MovingHelper.checkMoveOrJumpObjectToObject(this._x, this._y, d, 2);
+    if (obj) {
+        this.setMovementSuccess(true);
+        this.resetGetOnOffParams();
+        this.jumpToDir(d, 2, true);
+        this.unrideFromObject();
+        this.rideToObject(obj);
+        this._movingMode = MovingMode.ObjectToObject;
+        return true;
+    }
+    return false;
+}
+
 //------------------------------------------------------------------------------
 // 実際に移動を行う系
 
@@ -396,7 +443,7 @@ Game_CharacterBase.prototype.rideToObject = function(riddenObject: Game_Characte
     assert(this.objectId() >= 0);
     assert(riddenObject.objectId() >= 0);
 
-    this._ridingCharacterId = riddenObject.objectId();
+    this._riddeeCharacterId = riddenObject.objectId();
     riddenObject._ridderCharacterId = this.objectId();
 
     var oldZ = this._ridingScreenZPriority;
@@ -418,7 +465,7 @@ Game_CharacterBase.prototype.unrideFromObject = function() {
     if (obj) {
         obj._ridderCharacterId = -1;
     }
-    this._ridingCharacterId = -1;
+    this._riddeeCharacterId = -1;
 };
 
 /**
@@ -486,7 +533,7 @@ Game_CharacterBase.prototype.startFall = function() {
 
 var _Game_CharacterBase_isMoving = Game_CharacterBase.prototype.isMoving;
 Game_CharacterBase.prototype.isMoving = function() {
-    if (this.isRidding() && this._movingMode == 0) {
+    if (this.isRidding() && this._movingMode == MovingMode.Stopping) {
         // オブジェクトの上で静止している場合は停止状態とする。
         // ridding 時は下のオブジェクトと座標を同期するようになるため、
         // オリジナルの isMoving だは常に移動状態になってしまう。
@@ -497,6 +544,21 @@ Game_CharacterBase.prototype.isMoving = function() {
         return _Game_CharacterBase_isMoving.call(this);
     }
 }
+
+/*
+var _Game_CharacterBase_isNormalPriority = Game_CharacterBase.prototype.isNormalPriority;
+Game_CharacterBase.prototype.isNormalPriority = function(): boolean {
+    //
+    //
+    if (this.isRidding()) {
+        console.log("isNormalPriority false");
+        return false;
+    }
+    else {
+        return _Game_CharacterBase_isNormalPriority.call(this);
+    }
+};
+*/
 
 var _Game_CharacterBase_update = Game_CharacterBase.prototype.update;
 Game_CharacterBase.prototype.update = function() {
@@ -636,6 +698,7 @@ Game_CharacterBase.prototype.updateJump = function() {
 
     if (!this.isJumping()) {
         this._extraJumping = false;
+        this._movingMode = MovingMode.Stopping;
 
         if (oldJumping != this.isJumping()) {
             // ジャンプ終了
