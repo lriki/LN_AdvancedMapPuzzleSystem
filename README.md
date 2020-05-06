@@ -1,12 +1,20 @@
-謎解きマップシステムプラグイン v0.1.0
+謎解きマップシステムプラグイン
 ====================
 
-マップ上のキャラクター移動やイベントシステムを拡張し、謎解きの幅を広げるための様々な機能を追加します。
+マップ上のキャラクター移動やイベントシステムを拡張し、立体的な謎解きの幅を広げるための様々な機能を追加します。
 
 ※元ネタは [黄金の太陽シリーズ](https://ja.wikipedia.org/wiki/%E9%BB%84%E9%87%91%E3%81%AE%E5%A4%AA%E9%99%BD) の謎解きシステムです。
 
-:arrow_down: ダウンロード： [LN_AdvancedMapPuzzleSystem.js](https://raw.githubusercontent.com/lriki/LN_AdvancedMapPuzzleSystem/master/js/plugins/LN_AdvancedMapPuzzleSystem.js)
+[Gallery ページ](docs/Gallery.md) でサンプルの画面を見ることができます。
 
+**ダウンロード**
+
+| Version | File |
+|---------|------|
+| v0.2.0  | [:arrow_down: LN_AdvancedMapPuzzleSystem.js](https://raw.githubusercontent.com/lriki/LN_AdvancedMapPuzzleSystem/master/js/plugins/LN_AdvancedMapPuzzleSystem.js) |
+
+
+----------
 
 **開発状況について**
 
@@ -28,7 +36,7 @@
 
 
 目次
---------------------
+----------
 
 <!-- TOC orderedList:true -->
 
@@ -172,12 +180,10 @@
 
 ## マップオブジェクト
 
-![ToDo](http://img.shields.io/badge/status-ToDo-red.svg?style=flat)
-
 ### マップオブジェクトの作り方
 
-イベントの [メモ] に `@MapObject` と記述すると、そのイベントはマップオブジェクトとなります。
-さらに、[実行内容] に注釈として `@MapObject` に続く `{ }` の中にマップオブジェクトの詳細設定を記述します。
+イベントの [実行内容] に、注釈として `@MapObject` を含めると、そのイベントはマップオブジェクトとなります。
+さらに `@MapObject` に続く `{ }` の中にマップオブジェクトの詳細設定を記述します。
 
 ![](docs/img/4.png)
 
@@ -229,6 +235,8 @@
 
 ### 特定のイベント実行による箱オブジェクトからの降下
 
+![ToDo](http://img.shields.io/badge/status-ToDo-red.svg?style=flat)
+
 キャラクターは箱オブジェクトに乗っている場合、移動操作に制限を受ける状態となります。
 （例えば、斜め移動はできません）
 
@@ -243,6 +251,8 @@
 
 ### 箱オブジェクトを押して移動する
 
+![ToDo](http://img.shields.io/badge/status-ToDo-red.svg?style=flat)
+
 箱オブジェクトはキャラクターが接触すると、キャラクターの向きの方向へ移動します。
 
 ![](docs/img/13.gif)
@@ -255,6 +265,8 @@
 
 
 ### 箱オブジェクトの落下
+
+![ToDo](http://img.shields.io/badge/status-ToDo-red.svg?style=flat)
 
 エッジタイルの通行禁止方向に押して移動させたとき、落下することができます。
 
@@ -271,6 +283,8 @@
 
 ### 箱オブジェクトの積み重ね
 
+![ToDo](http://img.shields.io/badge/status-ToDo-red.svg?style=flat)
+
 落下中の箱オブジェクトは、下方向に別の箱オブジェクトがある場合、その上に乗ります。
 
 ![](docs/img/17.gif)
@@ -279,6 +293,8 @@
 
 
 ### 箱オブジェクト落下時のイベント起動
+
+![ToDo](http://img.shields.io/badge/status-ToDo-red.svg?style=flat)
 
 パラメータとして `trigger:onStartedFalling,` を指定すると、落下開始時にイベントを起動します。
 

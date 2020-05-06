@@ -46,6 +46,26 @@ export class MovingHelper {
      * ちなみにこれ系の "round" は マップのループ対応のための繰り返しを意味する
      */
     static roundXWithDirectionLong(x: number, d: number, len: number) {
+        
+        /*
+        // まずは 1 マス先を取得
+        var dx = $gameMap.roundXWithDirection(x, d);
+
+        // len 分だけ処理を繰り返して先に進める
+        var ic = Math.floor(len);
+        for (var i = 0; i < ic - 1; i++) {
+            dx = $gameMap.roundXWithDirection(dx, d);
+        }
+
+        // 端数分の処理
+        var f = len - Math.floor(len);
+        if (f > 0) {
+            dx += $gameMap.roundXWithDirection(0, d) * f;
+        }
+
+        return dx;
+        */
+
         // まずは 1 マス先を取得
         var dx = MovingHelper.roundXWithDirection(x, d);
 
@@ -68,6 +88,25 @@ export class MovingHelper {
      * see: roundXWithDirectionLong
      */
     static roundYWithDirectionLong(y: number, d: number, len: number) {
+        /*
+        // まずは 1 マス先を取得
+        var dy = $gameMap.roundYWithDirection(y, d);
+
+        // len 分だけ処理を繰り返して先に進める
+        var ic = Math.floor(len);
+        for (var i = 0; i < ic - 1; i++) {
+            dy = $gameMap.roundYWithDirection(dy, d);
+        }
+
+        // 端数分の処理
+        var f = len - Math.floor(len);
+        if (f > 0) {
+            dy += $gameMap.roundYWithDirection(0, d) * f;
+        }
+        
+        return dy;
+        */
+
         // まずは 1 マス先を取得
         var dy = MovingHelper.roundYWithDirection(y, d);
 
@@ -279,7 +318,7 @@ export class MovingHelper {
      * 移動かジャンプかは length で指定(1=移動 2=ジャンプ)
      * @param ignoreMapPassable: 基本は false。true は崖から落下したオブジェクトを別のオブジェクトに乗せるときの確認に使う。
      */
-    static checkMoveOrJumpGroundToObject(x: number, y: number, d: number, length: number, ignoreMapPassable: boolean) {
+    static checkMoveOrJumpGroundToObject(x: number, y: number, d: number, length: number, ignoreMapPassable: boolean): Game_CharacterBase | undefined {
         var x1 = Math.round(x);
         var y1 = Math.round(y);
         // 移動先座標を求める
@@ -289,7 +328,7 @@ export class MovingHelper {
         if (!ignoreMapPassable) {
             if ($gameMap.isPassable(x1, y1, d)) {
                 // 現在位置から移動できるなら崖ではない
-                return null;
+                return undefined;
             }
         }
 
@@ -299,7 +338,7 @@ export class MovingHelper {
             return obj;
         }
 
-        return null;
+        return undefined;
     };
 
     /**
@@ -358,7 +397,7 @@ export class MovingHelper {
     static isCollidedWithRiddingEvents(x: number, y: number) {
         var events = $gameMap.eventsXyNt(x, y);
         return events.some(function(event) {
-            return event.ridding();
+            return event.isRidding();
         });
     };
 
@@ -367,8 +406,8 @@ export class MovingHelper {
      */
     static findPassableRideObject(x: number, y: number): Game_CharacterBase | undefined {
         var events = $gameMap.events();
-        for(var i = 0; i < events.length; i++) {
-            if(events[i].checkPassRide(x, y)) {
+        for (var i = 0; i < events.length; i++) {
+            if (events[i].checkPassRide(x, y)) {
                 return events[i];
             };
         };
