@@ -1,10 +1,19 @@
 /// <reference types="rpgmakermv_typescript_dts"/>
-import { paramGuideLineTerrainTag } from './PluginParameters'
+import { paramMapSkillEffectsMapId, paramGuideLineTerrainTag } from './PluginParameters'
+import { AMPSManager } from './AMPSManager'
+import { assert } from './Common';
 
 declare global {
     interface Game_Map {
+        _spawnMapSkillEffectEventcallback: (event: Game_Event) => void;
+        _despawnMapSkillEffectEventcallback: (event: Game_Event) => void;
+
         checkNotPassageAll(x: number, y: number): boolean;
         checkGroove(x: number, y: number): boolean;
+        spawnMapSkillEffectEvent(name: string): Game_Event | undefined;
+        despawnMapSkillEffectEvent(event: Game_Event): void;
+        setSpawnMapSkillEffectEventHandler(callback: (event: Game_Event) => void): void;
+        setDespawnMapSkillEffectEventHandler(callback: (event: Game_Event) => void): void;
     }
 }
 
@@ -56,3 +65,56 @@ Game_Map.prototype.checkGroove = function(x: number, y: number) {
     }
     return false;
 }
+
+/**
+ * 
+ */
+Game_Map.prototype.spawnMapSkillEffectEvent = function(name: string): Game_Event | undefined {
+    console.log($dataMapSkillEffectsMap);
+    if ($dataMapSkillEffectsMap.events) {
+        let eventDataId = -1;
+        for (let i = 0; i < $dataMapSkillEffectsMap.events.length; i++) {
+            if ($dataMapSkillEffectsMap.events[i] && $dataMapSkillEffectsMap.events[i].name == name) {
+                eventDataId = i;
+                break;
+            }
+        }
+
+        if (eventDataId >= 0) {
+            let newIndex = this._events.length;
+            let newEvent = new Game_Event(paramMapSkillEffectsMapId, eventDataId);
+            //console.log("mapId ", newEvent._interpreter._mapId);
+            //newEvent._interpreter._mapId = paramMapSkillEffectsMapId;
+            this._events[newIndex] = newEvent;
+            newEvent._eventIndex = newIndex;
+            
+            console.log(this._events);
+
+            if (this._spawnMapSkillEffectEventcallback) {
+                this._spawnMapSkillEffectEventcallback(newEvent);
+            }
+            return newEvent;
+        }
+    }
+
+    return undefined;
+}
+
+Game_Map.prototype.despawnMapSkillEffectEvent = function(event: Game_Event): void {
+    assert(event._eventIndex >= 0);
+    //this._events[event._eventIndex] = new Game_Event(); // empty event
+    this._events.splice(event._eventIndex, 1);
+
+    if (this._despawnMapSkillEffectEventcallback) {
+        this._despawnMapSkillEffectEventcallback(event);
+    }
+}
+
+Game_Map.prototype.setSpawnMapSkillEffectEventHandler = function(callback: (event: Game_Event) => void): void {
+    this._spawnMapSkillEffectEventcallback = callback;
+}
+
+Game_Map.prototype.setDespawnMapSkillEffectEventHandler = function(callback: (event: Game_Event) => void): void {
+    this._despawnMapSkillEffectEventcallback = callback;
+}
+

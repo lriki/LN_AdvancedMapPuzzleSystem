@@ -1,14 +1,16 @@
 /// <reference types="rpgmakermv_typescript_dts"/>
-import { paramGuideLineTerrainTag } from './PluginParameters'
-import { ObjectType, strToObjectType, EventTrigger, strToEventTrigger } from './Common'
+import { paramMapSkillEffectsMapId } from './PluginParameters'
+import { ObjectType, strToObjectType, EventTrigger, strToEventTrigger, assert } from './Common'
 
 declare global {
     interface Game_Event {
         _objectType: ObjectType;
         _objectHeight: number;
         _fallable: boolean;
+        _eventIndex: number;    // this が割り当てられている $gameMap.events のインデックス
         _eventTrigger: EventTrigger;
         parseListCommentForAMPSObject(): boolean;
+        onTerminateParallelEvent(): void;
     }
 }
 
@@ -30,6 +32,16 @@ Game_Event.prototype.initMembers = function() {
     this._fallable = false;
     this._eventTrigger = EventTrigger.None;
 }
+
+var _Game_Event_prototype_event = Game_Event.prototype.event;
+Game_Event.prototype.event = function(): IDataMapEvent {
+    if ($dataMapSkillEffectsMap.events && this._mapId === paramMapSkillEffectsMapId) {
+        // エフェクト定義Map から複製された DynamicEvent はそちらからデータをとる
+        return $dataMapSkillEffectsMap.events[this._eventId];
+    }
+    else
+        return _Game_Event_prototype_event.call(this);
+};
 
 Game_Event.prototype.isMapObject = function() {
     return this._objectType != ObjectType.Character;
@@ -108,4 +120,24 @@ Game_Event.prototype.parseListCommentForAMPSObject = function(): boolean {
         }
     }
     return false;
+}
+
+var _Game_Event_updateParallel = Game_Event.prototype.updateParallel;
+Game_Event.prototype.updateParallel = function() {
+    if (this._interpreter) {
+        let oldRunning = this._interpreter.isRunning();
+        _Game_Event_updateParallel.call(this);
+        if (oldRunning && !this._interpreter.isRunning()) {
+            this.onTerminateParallelEvent();
+        }
+    }
+    else {
+        _Game_Event_updateParallel.call(this);
+    }
+}
+
+Game_Event.prototype.onTerminateParallelEvent = function() {
+    if (this._mapId === paramMapSkillEffectsMapId) {
+        $gameMap.despawnMapSkillEffectEvent(this);
+    }
 }
