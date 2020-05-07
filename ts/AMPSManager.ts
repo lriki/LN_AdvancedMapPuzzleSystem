@@ -32,6 +32,7 @@ DataManager.onLoad = function(object: any) {
 export class AMPSManager
 {
     static effectsMapData: IDataMap;
+    static tempMapSkillEffectDataId: number = -1;
 
     static padZero(str: string, length: number): string {
         var s = str;

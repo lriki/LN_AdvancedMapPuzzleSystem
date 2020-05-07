@@ -1,13 +1,24 @@
 /// <reference types="rpgmakermv_typescript_dts"/>
 import { paramMapSkillEffectsMapId } from './PluginParameters'
 import { ObjectType, strToObjectType, EventTrigger, strToEventTrigger, assert } from './Common'
+import { AMPSManager } from './AMPSManager';
 
 declare global {
+    /**
+     * Game_Event
+     * 
+     * MapSkillEffectEvent の Id について
+     * ----------
+     * _eventId は、$gameMap.event に動的に追加されたインデックスを示す。
+     * これは、Interpreter から「自分自身」を対象とした移動ルートなどの設定をできるようにするため。
+     * 一方 Data クラスを読み取るために _eventId が使えなくなるので、MapSkillEffectEvent 専用に _mapSkillEffectId を用意している。
+     */
     interface Game_Event {
         _objectType: ObjectType;
         _objectHeight: number;
         _fallable: boolean;
-        _eventIndex: number;    // this が割り当てられている $gameMap.events のインデックス
+        _eventIndex: number;    // [obsolete] < _eventId と同じにした  this が割り当てられている $gameMap.events のインデックス
+        _mapSkillEffectDataId: number;
         _eventTrigger: EventTrigger;
         parseListCommentForAMPSObject(): boolean;
         onTerminateParallelEvent(): void;
@@ -31,13 +42,16 @@ Game_Event.prototype.initMembers = function() {
     this._objectHeight = -1;
     this._fallable = false;
     this._eventTrigger = EventTrigger.None;
+    this._mapSkillEffectDataId = AMPSManager.tempMapSkillEffectDataId;
 }
 
 var _Game_Event_prototype_event = Game_Event.prototype.event;
 Game_Event.prototype.event = function(): IDataMapEvent {
     if ($dataMapSkillEffectsMap.events && this._mapId === paramMapSkillEffectsMapId) {
+        console.log(this);
+        assert(this._mapSkillEffectDataId >= 0);
         // エフェクト定義Map から複製された DynamicEvent はそちらからデータをとる
-        return $dataMapSkillEffectsMap.events[this._eventId];
+        return $dataMapSkillEffectsMap.events[this._mapSkillEffectDataId];
     }
     else
         return _Game_Event_prototype_event.call(this);
