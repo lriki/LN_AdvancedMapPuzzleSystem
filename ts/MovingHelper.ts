@@ -25,6 +25,22 @@ export class MovingHelper {
         return Math.floor(character.y) !== character.y;
     };
 
+    static frontX(x: number, d: number) : number {
+        return x + (d === 6 ? 1 : d === 4 ? -1 : 0);
+    }
+    
+    static frontY(y: number, d: number) : number {
+        return y + (d === 2 ? 1 : d === 8 ? -1 : 0);
+    }
+
+    static frontXAligned(x: number, d: number) : number {
+        return Math.round(x) + (d === 6 ? 1 : d === 4 ? -1 : 0);
+    }
+
+    static frontYAligned(y: number, d: number) : number {
+        return Math.round(y) + (d === 2 ? 1 : d === 8 ? -1 : 0);
+    }
+
     /**
      * オリジナルの Game_Map.prototype.roundXWithDirection の処理。
      * 本モジュールとしては必ず整数として扱う。
@@ -351,7 +367,7 @@ export class MovingHelper {
         var new_y = Math.round(MovingHelper.roundYWithDirectionLong(y, d, length));
 
         // 箱オブジェクトは特定の地形タグ上へのみ移動できる
-        if (character.objectType == ObjectType.Box && !character.falling()) {
+        if (character.objectType() == ObjectType.Box && !character.falling()) {
             if ($gameMap.terrainTag(new_x, new_y) != paramGuideLineTerrainTag) {
                 return false;
             }
@@ -435,24 +451,51 @@ export class MovingHelper {
         }
         return undefined;
     }
-/*
-    static findObjectLineRange(character: Game_CharacterBase, d: number, ranegLength: number) {
 
-        for (var iLen = 0; iLen < ranegLength; iLen++) {
-            var dx = Math.round(MovingHelper.roundXWithDirectionLong(character._x, d, iLen + 1));
-            var dy = Math.round(MovingHelper.roundYWithDirectionLong(character._y, d, iLen + 1));
-
-            var events = $gameMap.eventsXyNt(dx, dy);
-            for(var iEvent = 0; iEvent < events.length; iEvent++) {
-                if(events[iEvent].isMapObject()) {
-                    return events[iEvent];
+    /**
+     * 位置・向き・射程距離・反応してほしいマップスキル名を指定して、一番近い位置にあるオブジェクトを検索する。
+     * @param character 
+     * @param d 
+     * @param ranegLength 
+     */
+    static findReactorMapObjectInLineRange(x: number, y: number, d: number, ranegLength: number, mapSkillName: string): Game_Event | undefined {
+        let localName = mapSkillName.toLocaleLowerCase();
+        for (let iLen = 0; iLen < ranegLength; iLen++) {
+            let dx = Math.round(MovingHelper.roundXWithDirectionLong(x, d, iLen + 1));
+            let dy = Math.round(MovingHelper.roundYWithDirectionLong(y, d, iLen + 1));
+            let events = $gameMap.eventsXyNt(dx, dy);
+            for (let iEvent = 0; iEvent < events.length; iEvent++) {
+                let event = events[iEvent];
+                if (event.isMapObject() && event.reactionMapSkill() == localName) {
+                    return event;
                 }
             }
+            
+            // 次へ進むとき、見かけ上高い障害物が間にある場合は中断する。
+            // 高さとして、ひとつ上のタイルが☆であれば障害物とする。
+            if ($gameMap.isValid(dx, dy - 1) && MovingHelper.checkLayeredTilesFlags($gameMap, dx, dy - 1, 0x10)) {
+                return undefined;
+            }
+
         }
 
-        return null;
+        return undefined;
     }
-    */
+
+    /**
+     * Game_Map.checkLayeredTilesFlags の、tileId 0 を無視する版。
+     * tileId=0 の flags は 16 固定となっているため、☆の有無を知りたいときに邪魔になる。
+     * 
+     * × 1551: 110 0000 1111‬
+     * 〇 1536: 110 0000 0000
+     * ☆ 1552: 110 0001 0000
+     */
+    static checkLayeredTilesFlags = function(map: Game_Map, x: number, y: number, bit: number): boolean {
+        var flags = map.tilesetFlags();
+        return map.layeredTiles(x, y).some(function(tileId) {
+            return tileId !== 0 && (flags[tileId] & bit) !== 0;
+        });
+    };
 
     static reverseDir = function(d: number) {
         return 10 - d;

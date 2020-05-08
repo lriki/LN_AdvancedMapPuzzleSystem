@@ -32,7 +32,7 @@ enum MovingMode
 
 declare global {
     interface Game_CharacterBase {
-        objectType: ObjectType;
+        _objectType: ObjectType;
         _ridderCharacterId: number; // this に乗っているオブジェクト (this の上にあるオブジェクト)
         _riddeeCharacterId: number; // this が乗っているオブジェクと (this の下にあるオブジェクト)
         _waitAfterJump: number;
@@ -51,6 +51,7 @@ declare global {
         falling(): boolean;
         isMapObject(): boolean;
         objectId(): number;
+        objectType(): ObjectType;
         objectHeight(): number;
         canRide(): boolean;
         riddingObject(): Game_CharacterBase | undefined;
@@ -84,7 +85,7 @@ declare global {
 var _Game_CharacterBase_initMembers = Game_CharacterBase.prototype.initMembers;
 Game_CharacterBase.prototype.initMembers = function() {
     _Game_CharacterBase_initMembers.call(this);
-    this.objectType = ObjectType.Character;
+    this._objectType = ObjectType.Character;
     this._ridderCharacterId = -1;
     this._riddeeCharacterId = -1;
     this._waitAfterJump = 0;
@@ -152,12 +153,20 @@ Game_CharacterBase.prototype.isMapObject = function() {
     return false;
 };
 
+Game_Event.prototype.objectType = function() {
+    return this._objectType;
+};
+
 /**
  * Player は 0. イベントは EventId
  */
 Game_CharacterBase.prototype.objectId = function(): number {
     return -1;
 };
+
+Game_CharacterBase.prototype.objectType = function(): ObjectType {
+    return this._objectType;
+}
 
 // マップオブジェクトとしての高さ。
 // 高さを持たないのは -1。
@@ -268,6 +277,7 @@ Game_CharacterBase.prototype.moveStraightMain = function(d: number) {
         
         this.setDirection(d);
     }
+
 };
 
 /**
@@ -630,10 +640,6 @@ Game_CharacterBase.prototype.updateMove = function() {
             tx = this._x;
             ty = this._y;
         }
-
-
-        console.log(this._movingMode);
-        console.log(tx, this._realX);
 
         var t = Math.min(this._getonoffFrameCount / this._getonoffFrameMax, 1.0);
         this._realX = MovingHelper.linear(t, this._getonoffStartX, tx - this._getonoffStartX, 1.0);

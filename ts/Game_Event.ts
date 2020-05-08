@@ -2,6 +2,16 @@
 import { paramMapSkillEffectsMapId } from './PluginParameters'
 import { ObjectType, strToObjectType, EventTrigger, strToEventTrigger, assert } from './Common'
 import { AMPSManager } from './AMPSManager';
+import { MovingHelper } from './MovingHelper';
+
+enum MapSkillEffectInitialPosition {
+    // 発動者と同じ位置
+    Default,
+    // 発動者の目の前のタイル
+    Front,
+    // 
+    //Target,
+}
 
 declare global {
     /**
@@ -14,12 +24,21 @@ declare global {
      * 一方 Data クラスを読み取るために _eventId が使えなくなるので、MapSkillEffectEvent 専用に _mapSkillEffectId を用意している。
      */
     interface Game_Event {
-        _objectType: ObjectType;
+        //_objectType: ObjectType;
         _objectHeight: number;
         _fallable: boolean;
         _eventIndex: number;    // [obsolete] < _eventId と同じにした  this が割り当てられている $gameMap.events のインデックス
         _mapSkillEffectDataId: number;
-        _eventTrigger: EventTrigger;
+        _mapSkillEffectInvokerId: number;   // MapSkill を発動した Character の ID (0=Player, 1~=Event)
+        _mapSkillEffectInitialPosition: MapSkillEffectInitialPosition;
+        _mapObjectEventTrigger: EventTrigger;
+        _mapSkillRange: number;
+        _reactionMapSkill: string;  // "reaction:" の値を toLocaleLowerCase したもの。
+
+        //objectType(): ObjectType;
+        reactionMapSkill(): string;
+        mapSkillEffectInvoker(): Game_Character | undefined;
+        directionAsMapSkillEffect(): number;
         parseListCommentForAMPSObject(): boolean;
         onTerminateParallelEvent(): void;
     }
@@ -41,14 +60,15 @@ Game_Event.prototype.initMembers = function() {
     this._objectType = ObjectType.Character;
     this._objectHeight = -1;
     this._fallable = false;
-    this._eventTrigger = EventTrigger.None;
+    this._mapObjectEventTrigger = EventTrigger.None;
     this._mapSkillEffectDataId = AMPSManager.tempMapSkillEffectDataId;
+    this._mapSkillEffectInvokerId = AMPSManager.tempMapSkillEffectInvokerId;
+    this._mapSkillEffectInitialPosition = MapSkillEffectInitialPosition.Default;
 }
 
 var _Game_Event_prototype_event = Game_Event.prototype.event;
 Game_Event.prototype.event = function(): IDataMapEvent {
     if ($dataMapSkillEffectsMap.events && this._mapId === paramMapSkillEffectsMapId) {
-        console.log(this);
         assert(this._mapSkillEffectDataId >= 0);
         // エフェクト定義Map から複製された DynamicEvent はそちらからデータをとる
         return $dataMapSkillEffectsMap.events[this._mapSkillEffectDataId];
@@ -65,9 +85,56 @@ Game_Event.prototype.objectId = function(): number {
     return this.eventId();
 };
 
-Game_Event.prototype.objectHeight = function() {
+Game_Event.prototype.objectHeight = function(): number {
     return this._objectHeight;
 };
+
+Game_Event.prototype.reactionMapSkill = function(): string {
+    return this._reactionMapSkill;
+};
+
+Game_Event.prototype.mapSkillEffectInvoker = function(): Game_Character | undefined {
+    if (this._mapSkillEffectInvokerId < 0) {
+        return undefined;
+    }
+    else if (this._mapSkillEffectInvokerId == 0) {
+        return $gamePlayer;
+    }
+    else {
+        return $gameMap.event(this._mapSkillEffectInvokerId);
+    }
+};
+
+/**
+ * マップスキルエフェクトとしての向き (進行方向) を取得する。
+ * 
+ * ほとんどの場合マップスキルは向き固定のグラフィックで使いたい。
+ * また向きは this に依存するというよりは呼び出し元キャラクターに同期するように動くべき。
+ */
+Game_Event.prototype.directionAsMapSkillEffect = function(): number {
+    let invoker = this.mapSkillEffectInvoker();
+    if (invoker)
+        return invoker.direction();
+    else
+        return this.direction();
+}
+
+var _Game_Event_refresh = Game_Event.prototype.refresh;
+Game_Event.prototype.refresh = function() {
+    _Game_Event_refresh.call(this);
+
+    // マップスキルエフェクトの場合、初期座標を呼び出し元キャラクターに合わせておく。
+    // (本当は init 辺りでやったほうがいいと思うけど、initialize の上書きが難しいのでひとまずここで)
+    let involer = this.mapSkillEffectInvoker();
+    if (involer) {
+        if (this._mapSkillEffectInitialPosition = MapSkillEffectInitialPosition.Front) {
+            this.locate(MovingHelper.frontX(involer.x, involer.direction()), MovingHelper.frontY(involer.y, involer.direction()));
+        }
+        else {
+            this.locate(involer.x, involer.y);
+        }
+    }
+}
 
 var _Game_Event_setupPage = Game_Event.prototype.setupPage;
 Game_Event.prototype.setupPage = function() {
@@ -81,6 +148,18 @@ Game_Event.prototype.setupPage = function() {
     if (this.objectHeight() == 0 && oldRider) {
         oldRider.jump(0, oldHeight);
     }
+
+    if (this._objectType == ObjectType.Effect && this._mapObjectEventTrigger == EventTrigger.OnSpawnedAsEffect) {
+        let involer = this.mapSkillEffectInvoker();
+        if (involer) {
+            let target = MovingHelper.findReactorMapObjectInLineRange(involer.x, involer.y, this.directionAsMapSkillEffect(), this._mapSkillRange, this.event().name ?? "");
+            if (target) {
+                console.log("hi:");
+                console.log(target);
+                target.start();
+            }
+        }
+    }
 }
 
 Game_Event.prototype.parseListCommentForAMPSObject = function(): boolean {
@@ -88,7 +167,10 @@ Game_Event.prototype.parseListCommentForAMPSObject = function(): boolean {
     this._objectType = ObjectType.Character;
     this._objectHeight = -1;
     this._fallable = false;
-    this._eventTrigger = EventTrigger.None;
+    this._mapObjectEventTrigger = EventTrigger.None;
+    this._mapSkillRange = -1;
+    this._reactionMapSkill = '';
+    this._mapSkillEffectInitialPosition = MapSkillEffectInitialPosition.Default;
 
     let list = this.list();
     if (list) {
@@ -125,7 +207,19 @@ Game_Event.prototype.parseListCommentForAMPSObject = function(): boolean {
                         this._fallable = (tokens[1].trim() == 'true') ? true : false;
                         break;
                     case "trigger":
-                        this._eventTrigger = strToEventTrigger(tokens[1].trim()); 
+                        this._mapObjectEventTrigger = strToEventTrigger(tokens[1].trim()); 
+                        break;
+                    case "range":
+                        this._mapSkillRange = Number(tokens[1].trim()); 
+                        break;
+                    case "reaction":
+                        this._reactionMapSkill = tokens[1].trim().toLocaleLowerCase(); 
+                        break;
+                    case "pos":
+                        switch (tokens[1].trim().toLocaleLowerCase()) {
+                            case "front":
+                                this._mapSkillEffectInitialPosition = MapSkillEffectInitialPosition.Front; 
+                        }
                         break;
                 }
             }
@@ -142,6 +236,7 @@ Game_Event.prototype.updateParallel = function() {
         let oldRunning = this._interpreter.isRunning();
         _Game_Event_updateParallel.call(this);
         if (oldRunning && !this._interpreter.isRunning()) {
+            // "並列実行" の終了を検知。FIXME: Game_Interpreter.terminate でやってもいいかも？
             this.onTerminateParallelEvent();
         }
     }

@@ -82,17 +82,13 @@ Game_Map.prototype.spawnMapSkillEffectEvent = function(name: string): Game_Event
 
         if (eventDataId >= 0) {
             AMPSManager.tempMapSkillEffectDataId = eventDataId;
+            AMPSManager.tempMapSkillEffectInvokerId = 0;    // TODO:
             let newIndex = this._events.length;
             let newEvent = new Game_Event(paramMapSkillEffectsMapId, newIndex);
             AMPSManager.tempMapSkillEffectDataId = -1;
+            AMPSManager.tempMapSkillEffectInvokerId = -1;
             newEvent._eventIndex = newIndex;
-            //newEvent._mapSkillEffectDataId = eventDataId;
-            //console.log("mapId ", newEvent._interpreter._mapId);
-            //newEvent._interpreter._mapId = paramMapSkillEffectsMapId;
             this._events[newIndex] = newEvent;
-            console.log("newEvent:");
-            console.log(newEvent);
-            
 
             if (this._spawnMapSkillEffectEventcallback) {
                 this._spawnMapSkillEffectEventcallback(newEvent);

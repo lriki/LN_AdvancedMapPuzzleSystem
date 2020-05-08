@@ -29,7 +29,6 @@ Spriteset_Map.prototype.onDespawnMapSkillEffectEvent = function(despawndEvent: G
     for (let i = 0; i < this._characterSprites.length; i++) {
         let character = this._characterSprites[i]._character;
         let event = (character as Game_Event);
-        console.log(event);
         if (event) {
             if (event._eventIndex != undefined) {
                 if (event._eventIndex == despawndEvent._eventIndex) {
