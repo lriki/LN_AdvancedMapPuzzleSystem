@@ -40,6 +40,7 @@ declare global {
         mapSkillEffectInvoker(): Game_Character | undefined;
         directionAsMapSkillEffect(): number;
         parseListCommentForAMPSObject(): boolean;
+        startAsReactor(): void;
         onTerminateParallelEvent(): void;
     }
 }
@@ -154,9 +155,7 @@ Game_Event.prototype.setupPage = function() {
         if (involer) {
             let target = MovingHelper.findReactorMapObjectInLineRange(involer.x, involer.y, this.directionAsMapSkillEffect(), this._mapSkillRange, this.event().name ?? "");
             if (target) {
-                console.log("hi:");
-                console.log(target);
-                target.start();
+                target.startAsReactor();
             }
         }
     }
@@ -229,6 +228,25 @@ Game_Event.prototype.parseListCommentForAMPSObject = function(): boolean {
     }
     return false;
 }
+
+/**
+ * Reactor の場合は通常のイベント起動をすべて禁止する。
+ */
+var _Game_Event_start = Game_Event.prototype.start;
+Game_Event.prototype.start = function() {
+    if (this.objectType() == ObjectType.Reactor) {
+    }
+    else {
+        _Game_Event_start.call(this);
+    }
+};
+
+/**
+ * Reactor としてイベントを開始する。
+ */
+Game_Event.prototype.startAsReactor = function() {
+    _Game_Event_start.call(this);
+};
 
 var _Game_Event_updateParallel = Game_Event.prototype.updateParallel;
 Game_Event.prototype.updateParallel = function() {
