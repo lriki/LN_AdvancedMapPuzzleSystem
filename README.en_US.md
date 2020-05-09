@@ -1,7 +1,7 @@
 RPG Maker MV - Advanced Map Puzzle System
 ====================
 
-Expand the character movement and event system on the map and add features for advanced puzzles.
+Extend the character movement and event system on the map and add features for advanced puzzles.
 
 Inspired: [Golden Sun](https://en.wikipedia.org/wiki/Golden_Sun)
 
