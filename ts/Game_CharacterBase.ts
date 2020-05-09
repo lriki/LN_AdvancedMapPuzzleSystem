@@ -18,16 +18,22 @@
 import { assert, ObjectType } from './Common'
 import { MovingHelper } from './MovingHelper'
 import { AMPS_SoundManager } from "./SoundManager";
+import { MovingBehavior, MovingBehavior_PushMoving } from "./MovingBehavior";
 
 const JUMP_WAIT_COUNT   = 10;
 
-enum MovingMode
-{
+enum MovingMode {
     Stopping,
     GroundToGround,
     GroundToObject,
     ObjectToObject,
     ObjectToGround,
+}
+
+enum FallingState {
+    None,
+    Failling,
+    EpilogueToRide,
 }
 
 declare global {
@@ -41,6 +47,10 @@ declare global {
         _movingMode: MovingMode;
         _forcePositionAdjustment: boolean;  // moveToDir 移動時、移動先位置を強制的に round するかどうか（半歩移動の封印）
         _moveToFalling: boolean;    // 現在の移動ステップが終わったら落下する
+        _fallingState: FallingState;
+        
+        _movingBehavior: MovingBehavior | undefined;
+        _movingBehaviorOwnerCharacterId: number;
         
         _getonoffFrameMax: number;      // オブジェクト乗降時の移動モーションが不自然に見えないように補間したりするパラメータ
         _getonoffFrameCount: number;    // オブジェクト乗降時の移動モーションが不自然に見えないように補間したりするパラメータ
@@ -48,14 +58,15 @@ declare global {
         _getonoffStartY: number;        // オブジェクト乗降時の移動モーションが不自然に見えないように補間したりするパラメータ
 
         isRidding(): boolean;
-        falling(): boolean;
         isMapObject(): boolean;
         objectId(): number;
         objectType(): ObjectType;
         objectHeight(): number;
+        isMover(): boolean;
         canRide(): boolean;
         riddingObject(): Game_CharacterBase | undefined;
         rider(): Game_CharacterBase | undefined;
+        isFalling(): boolean;
         checkPassRide(x: number, y: number): boolean;
 
         moveStraightMain(d: number): void;
@@ -79,6 +90,8 @@ declare global {
         onStepEnd(): void;
         onJumpEnd(): void;
         onCharacterRideOn(): void;
+
+        isHalfMove(): boolean;
     }
 }
 
@@ -94,6 +107,11 @@ Game_CharacterBase.prototype.initMembers = function() {
     this._movingMode = MovingMode.Stopping;
     this._forcePositionAdjustment = false;
     this._moveToFalling = false;
+    this._fallingState = FallingState.None;
+
+    this._movingBehavior = undefined;
+    this._movingBehaviorOwnerCharacterId = -1;
+    
     this._getonoffFrameCount = 0;
     this._getonoffFrameMax = 0;
     this._getonoffStartX = 0;
@@ -110,6 +128,10 @@ Game_CharacterBase.prototype.moveStraight = function (d: number) {
     
     if (this._waitAfterJump > 0) {
         this._waitAfterJump--;
+        return;
+    }
+
+    if (MovingBehavior_PushMoving.tryStartPushObjectAndMove(this, d)) {
         return;
     }
 
@@ -142,13 +164,6 @@ Game_CharacterBase.prototype.isRidding = function(): boolean {
     return this._riddeeCharacterId >= 0;
 }
 
-/**
- * 落下中であるか？
- */
-Game_CharacterBase.prototype.falling = function(): boolean {
-    return false;
-}
-
 Game_CharacterBase.prototype.isMapObject = function() {
     return false;
 };
@@ -172,6 +187,13 @@ Game_CharacterBase.prototype.objectType = function(): ObjectType {
 // 高さを持たないのは -1。
 Game_CharacterBase.prototype.objectHeight = function() {
     return -1;
+};
+
+/**
+ * 自分から移動する人。箱オブジェクトを動かせるかどうか。マップオブジェクトは基本的に false。自分から移動はしない。
+ */
+Game_CharacterBase.prototype.isMover = function() {
+    return this.objectType() == ObjectType.Character;
 };
 
 Game_CharacterBase.prototype.canRide = function() {
@@ -222,6 +244,13 @@ Game_CharacterBase.prototype.riddingObject = function(): Game_CharacterBase | un
         return $gameMap.event(this._riddeeCharacterId);
     }
 }
+
+/**
+ * 落下中であるか？
+ */
+Game_CharacterBase.prototype.isFalling = function(): boolean {
+    return this._fallingState != FallingState.None;
+};
 
 var _Game_CharacterBase_screenZ = Game_CharacterBase.prototype.screenZ;
 Game_CharacterBase.prototype.screenZ = function() {
@@ -572,7 +601,7 @@ Game_CharacterBase.prototype.isNormalPriority = function(): boolean {
 
 var _Game_CharacterBase_update = Game_CharacterBase.prototype.update;
 Game_CharacterBase.prototype.update = function() {
-/*
+
     // MovingBehavior への通知
     if (this._movingBehavior) {
         if (this._movingBehavior.onOwnerUpdate(this)) {
@@ -580,15 +609,17 @@ Game_CharacterBase.prototype.update = function() {
         }
     }
     if (this._movingBehaviorOwnerCharacterId >= 0) {
-        var character = MovingHelper.findCharacterById(this._movingBehaviorOwnerCharacterId);
-        if (character._movingBehavior.onTargetUpdate(this)) {
-            return;
+        let character = MovingHelper.getCharacterById(this._movingBehaviorOwnerCharacterId);
+        if (character._movingBehavior) {
+            if (character._movingBehavior.onTargetUpdate(this)) {
+                return;
+            }
         }
     }
-*/
+
     _Game_CharacterBase_update.call(this);
 
-    if (this.falling()) {
+    if (this.isFalling()) {
         console.log("not implemented.");
         //this.updateFall();
     }
@@ -727,15 +758,15 @@ Game_CharacterBase.prototype.resetGetOnOffParams = function() {
  * 1歩歩き終わり、次の移動ができる状態になった
  */
 Game_CharacterBase.prototype.onStepEnd = function() {
-    /*
     if (this._movingBehavior) {
         this._movingBehavior.onOwnerStepEnding(this);
     }
     if (this._movingBehaviorOwnerCharacterId >= 0) {
-        var character = MovingHelper.findCharacterById(this._movingBehaviorOwnerCharacterId)
-        character._movingBehavior.onTargetStepEnding(this);
+        let character = MovingHelper.getCharacterById(this._movingBehaviorOwnerCharacterId);
+        if (character._movingBehavior) {
+            character._movingBehavior.onTargetStepEnding(this);
+        }
     }
-    */
 
     // 何かに乗っていたら通知
     var riddingObject = this.riddingObject();
@@ -765,12 +796,20 @@ Game_CharacterBase.prototype.onCharacterRideOn = function() {
 //------------------------------------------------------------------------------
 // HalfMove.js 対策
 
-/*
 var _Game_CharacterBase_isHalfMove = Game_CharacterBase.prototype.isHalfMove;
 Game_CharacterBase.prototype.isHalfMove = function() {
-    if (this._forcePositionAdjustment)
+    if (!this.isMover()) {
+        // Box とかは基本的に <HMHalfDisable> が必要になるが、忘れやすいので封印しておく
         return false;
-    else
-        return _Game_CharacterBase_isHalfMove.apply(this, arguments);
+    }
+    else if (this._forcePositionAdjustment) {
+        return false;
+    }
+    else if (_Game_CharacterBase_isHalfMove) {
+        return _Game_CharacterBase_isHalfMove.call(this);
+    }
+    else {
+        return false;
+    }
 }
-*/
+

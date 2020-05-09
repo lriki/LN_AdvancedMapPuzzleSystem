@@ -14,3 +14,21 @@ Game_Player.prototype.isCollided = function(x: number, y: number): boolean {
         return _Game_Player_isCollided.call(this, x, y);
     }
 };
+
+var _Game_Player_canMove = Game_Player.prototype.canMove;
+Game_Player.prototype.canMove = function(): boolean {
+    if (this._movingBehavior) {
+        // 移動制御中のタッチ移動や接触イベント起動を禁止
+        return false;
+    }
+    return _Game_Player_canMove.call(this);
+}
+
+var _Game_Player_isDashing = Game_Player.prototype.isDashing;
+Game_Player.prototype.isDashing = function(): boolean {
+    if (this._movingBehavior) {
+        // 移動制御中のタッチ移動や接触イベント起動を禁止
+        return false;
+    }
+    return _Game_Player_isDashing.call(this);
+};

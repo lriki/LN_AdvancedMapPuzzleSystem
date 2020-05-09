@@ -367,7 +367,7 @@ export class MovingHelper {
         var new_y = Math.round(MovingHelper.roundYWithDirectionLong(y, d, length));
 
         // 箱オブジェクトは特定の地形タグ上へのみ移動できる
-        if (character.objectType() == ObjectType.Box && !character.falling()) {
+        if (character.objectType() == ObjectType.Box && !character.isFalling()) {
             if ($gameMap.terrainTag(new_x, new_y) != paramGuideLineTerrainTag) {
                 return false;
             }
@@ -431,7 +431,7 @@ export class MovingHelper {
     }
 
     // id: 0=Player, 1~=Event
-    static findCharacterById(id: number): Game_CharacterBase {
+    static getCharacterById(id: number): Game_Character {
         if (id == 0) {
             return $gamePlayer;
         }
@@ -442,7 +442,7 @@ export class MovingHelper {
     /**
      * 指定座標にいるマップオブジェクトを取得する。存在しない場合は null
      */
-    static findObject = function(x: number, y: number): Game_CharacterBase | undefined {
+    static findObject = function(x: number, y: number): Game_Event | undefined {
         var events = $gameMap.eventsXyNt(x, y);
         for(var i = 0; i < events.length; i++) {
             if(events[i].isMapObject()) {
@@ -471,13 +471,10 @@ export class MovingHelper {
             let dx = Math.round(MovingHelper.roundXWithDirectionLong(x, d, iLen + 1));
             let dy = Math.round(MovingHelper.roundYWithDirectionLong(y, d, iLen + 1));
 
-            //if (iLen > 0) {
-                let d2 = this.reverseDir(d);
-                if (!$gameMap.isPassable(dx, dy, d2)) {
-                    relativeHeight++;
-                }
-            //}
-            console.log(relativeHeight);
+            let d2 = this.reverseDir(d);
+            if (!$gameMap.isPassable(dx, dy, d2)) {
+                relativeHeight++;
+            }
 
             if (relativeHeight === 0) {
                 let events = $gameMap.eventsXyNt(dx, dy);
