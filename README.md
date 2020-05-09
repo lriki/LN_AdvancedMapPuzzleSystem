@@ -11,10 +11,14 @@
 
 | Version | File |
 |---------|------|
-| v0.2.0  | [:arrow_down: LN_AdvancedMapPuzzleSystem.js](https://raw.githubusercontent.com/lriki/LN_AdvancedMapPuzzleSystem/master/js/plugins/LN_AdvancedMapPuzzleSystem.js) |
+| v0.3.0  | [:arrow_down: LN_AdvancedMapPuzzleSystem.js](https://raw.githubusercontent.com/lriki/LN_AdvancedMapPuzzleSystem/master/js/plugins/LN_AdvancedMapPuzzleSystem.js) |
 
 
 ----------
+
+**サンプルプロジェクトについて**
+
+RPG ツクール MV で新規プロジェクトを作成し、[:arrow_down: こちら](https://github.com/lriki/LN_AdvancedMapPuzzleSystem/archive/master.zip) からダウンロードしたすべてのファイルを上書きしてください。
 
 **開発状況について**
 
@@ -173,7 +177,7 @@
 
 間のタイルの通行可否は関係ありません。
 
-なお、単純に向かい合っているかどうかで判断するため、見かけ上の位置や高さが違う場所へジャンプできてしまう点に注意してください。
+:warning: なお、単純に向かい合っているかどうかで判断するため、見かけ上の位置や高さが違う場所へジャンプできてしまう点に注意してください。
 
 ![](docs/img/8.gif)
 
@@ -205,16 +209,16 @@
 
 | 名前 | 値 | デフォルト |説明 |
 |------|------|------|------|
-| type | `box` | - | 固定値 |
+| box | - | - | - |
 | height | 整数値 | 1 | オブジェクトの高さをタイル単位で指定します。1以上にしてください。 |
-| fallable | bool 値 | false | true を指定すると、崖際などから落下できるようになります。 |
+| fallable | bool 値 | false | ![ToDo](http://img.shields.io/badge/status-ToDo-red.svg?style=flat) true を指定すると、崖際などから落下できるようになります。 |
 
 
 注釈の例：
 
 ```
 @MapObject {
-  type:box,
+  box,
   height:1,
 }
 ```
@@ -251,13 +255,11 @@
 
 ### 箱オブジェクトを押して移動する
 
-![ToDo](http://img.shields.io/badge/status-ToDo-red.svg?style=flat)
-
 箱オブジェクトはキャラクターが接触すると、キャラクターの向きの方向へ移動します。
 
 ![](docs/img/13.gif)
 
-この移動は `地形タグ 7` のタイル上に限られます。（プラグインのパラメータで変更できます）
+この移動は `ガイドライン (地形タグ 7 のタイル)` 上に限られます。
 
 基本としてオートタイルに地形タグを割り当て、地形を装飾しつつ移動可能な範囲を示す使い方を想定しています。
 
