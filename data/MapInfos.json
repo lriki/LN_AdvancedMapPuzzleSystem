@@ -13,5 +13,5 @@ null,
 {"id":11,"expanded":true,"name":"Test-MapSkill","order":13,"parentId":0,"scrollX":819,"scrollY":461},
 {"id":12,"expanded":false,"name":"Front-Direct","order":14,"parentId":11,"scrollX":811,"scrollY":1161},
 {"id":13,"expanded":false,"name":"Sample3","order":5,"parentId":2,"scrollX":819,"scrollY":461},
-{"id":14,"expanded":false,"name":"Box-Push","order":11,"parentId":7,"scrollX":819,"scrollY":461}
+{"id":14,"expanded":false,"name":"Box-Push","order":11,"parentId":7,"scrollX":811,"scrollY":461}
 ]

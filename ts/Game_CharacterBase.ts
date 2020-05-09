@@ -18,7 +18,8 @@
 import { assert, ObjectType } from './Common'
 import { MovingHelper } from './MovingHelper'
 import { AMPS_SoundManager } from "./SoundManager";
-import { MovingBehavior, MovingBehavior_PushMoving } from "./MovingBehavior";
+import { MovingSequel, MovingSequel_PushMoving } from "./MovingSequel";
+import { paramGuideLineTerrainTag } from './PluginParameters';
 
 const JUMP_WAIT_COUNT   = 10;
 
@@ -49,8 +50,8 @@ declare global {
         _moveToFalling: boolean;    // 現在の移動ステップが終わったら落下する
         _fallingState: FallingState;
         
-        _movingBehavior: MovingBehavior | undefined;
-        _movingBehaviorOwnerCharacterId: number;
+        _movingSequel: MovingSequel | undefined;
+        _movingSequelOwnerCharacterId: number;
         
         _getonoffFrameMax: number;      // オブジェクト乗降時の移動モーションが不自然に見えないように補間したりするパラメータ
         _getonoffFrameCount: number;    // オブジェクト乗降時の移動モーションが不自然に見えないように補間したりするパラメータ
@@ -66,6 +67,7 @@ declare global {
         canRide(): boolean;
         riddingObject(): Game_CharacterBase | undefined;
         rider(): Game_CharacterBase | undefined;
+        isFallable(): boolean;
         isFalling(): boolean;
         checkPassRide(x: number, y: number): boolean;
 
@@ -109,8 +111,8 @@ Game_CharacterBase.prototype.initMembers = function() {
     this._moveToFalling = false;
     this._fallingState = FallingState.None;
 
-    this._movingBehavior = undefined;
-    this._movingBehaviorOwnerCharacterId = -1;
+    this._movingSequel = undefined;
+    this._movingSequelOwnerCharacterId = -1;
     
     this._getonoffFrameCount = 0;
     this._getonoffFrameMax = 0;
@@ -131,7 +133,7 @@ Game_CharacterBase.prototype.moveStraight = function (d: number) {
         return;
     }
 
-    if (MovingBehavior_PushMoving.tryStartPushObjectAndMove(this, d)) {
+    if (MovingSequel_PushMoving.tryStartPushObjectAndMove(this, d)) {
         return;
     }
 
@@ -245,6 +247,10 @@ Game_CharacterBase.prototype.riddingObject = function(): Game_CharacterBase | un
     }
 }
 
+Game_CharacterBase.prototype.isFalling = function(): boolean {
+    return false;
+};
+
 /**
  * 落下中であるか？
  */
@@ -274,7 +280,7 @@ Game_CharacterBase.prototype.screenZ = function() {
 /**
  * ジャンプやオブジェクトへの乗降を伴う移動のメイン処理。
  * オブジェクトを押すなど、他イベントへ影響するような処理は行わない。あくまで自分自身の移動に関係する処理を行う。
- * （他オブジェクトと関係して動くものは MovingBehavior で定義する）
+ * （他オブジェクトと関係して動くものは MovingSequel で定義する）
  */
 Game_CharacterBase.prototype.moveStraightMain = function(d: number) {
 
@@ -283,11 +289,11 @@ Game_CharacterBase.prototype.moveStraightMain = function(d: number) {
     if (!this.isRidding()) {
         if (this.attemptMoveGroundToGround(d)) {
         }
+        else if (this.attemptMoveGroundToObject(d, false)) {    // ジャンプより先にオブジェクトへの歩行移動を優先したい
+        }
         else if (this.attemptJumpGroundToGround(d)) {
         }
         else if (this.attemptJumpGroove(d)) {
-        }
-        else if (this.attemptMoveGroundToObject(d, false)) {
         }
         else if (this.attemptJumpGroundToObject(d)) {
         }
@@ -313,21 +319,45 @@ Game_CharacterBase.prototype.moveStraightMain = function(d: number) {
  * Ground > Ground (普通の移動)
  */
 Game_CharacterBase.prototype.attemptMoveGroundToGround = function(d: number): boolean {
-
-    var oldX = this._x;
-    var oldY = this._y;
-
-    _Game_CharacterBase_moveStraight.call(this, d);
-    
-    if (this._movementSuccess) {
-        if (this._forcePositionAdjustment) {
-            // Ground to Ground 移動で、オブジェクトを押すときなどの位置合わせ
-            this._x = Math.round(MovingHelper.roundXWithDirection(oldX, d));
-            this._y = Math.round(MovingHelper.roundYWithDirection(oldY, d));
+    // TODO: これ以上 type が増えそうなら Behavior に独立を考える
+    if (this.objectType() == ObjectType.Box && !this.isThrough()) {// && !this.isFalling()) {
+        var dx = Math.round(MovingHelper.roundXWithDirectionLong(this._x, d, 1));
+        var dy = Math.round(MovingHelper.roundYWithDirectionLong(this._y, d, 1));
+        if ($gameMap.terrainTag(dx, dy) == paramGuideLineTerrainTag && this.isMapPassable(this._x, this._y, d)) {
+            _Game_CharacterBase_moveStraight.call(this, d);
+            if (this.isMovementSucceeded(this.x, this.y)) {
+                return true;
+            }
         }
 
-        this._movingMode = MovingMode.GroundToGround;
-        return true;
+        // 移動先、崖落ちの落下移動できる？
+        if (this.isFallable() &&
+            $gameMap.terrainTag(this._x, this._y) == paramGuideLineTerrainTag &&
+            MovingHelper.checkFacingOutsideOnEdgeTile(this._x, this._y, d) &&
+            MovingHelper.checkMoveOrJumpObjectToObject(this._x, this._y, d, 1) == null) // 乗れそうなオブジェクトがないこと
+        {
+            this.moveToDir(d, false);
+            this.setMovementSuccess(true);
+            this._moveToFalling = true; // 1歩移動後、落下
+            return true;
+        }
+    }
+    else {
+        var oldX = this._x;
+        var oldY = this._y;
+
+        _Game_CharacterBase_moveStraight.call(this, d);
+        
+        if (this._movementSuccess) {
+            if (this._forcePositionAdjustment) {
+                // Ground to Ground 移動で、オブジェクトを押すときなどの位置合わせ
+                this._x = Math.round(MovingHelper.roundXWithDirection(oldX, d));
+                this._y = Math.round(MovingHelper.roundYWithDirection(oldY, d));
+            }
+
+            this._movingMode = MovingMode.GroundToGround;
+            return true;
+        }
     }
 
     return false;
@@ -406,19 +436,19 @@ Game_CharacterBase.prototype.attemptMoveObjectToGround = function(d: number): bo
         this._movingMode = MovingMode.ObjectToGround;
         return true;
     }
-    /*
     else {
-        if (this.objectTypeName() == "box" && this.fallable() &&
-            !MovingHelper.checkFacingOtherEdgeTile(this._x, this._y, d, 1)) {
-            this.setMovementSuccess(true);
-            this.startMoveToObjectOrGround(true, d);
-            this.moveToDir(d, false);
-            this.unrideFromObject();
-            this._moveToFalling = true; // 1歩移動後、落下
-            return true;
+        // TODO: これ以上 type が増えそうなら Behavior に独立を考える
+        if (this.objectType() == ObjectType.Box && this.isFallable()) {
+            if (!MovingHelper.checkFacingOtherEdgeTile(this._x, this._y, d, 1)) {
+                this.setMovementSuccess(true);
+                this.resetGetOnOffParams();
+                this.moveToDir(d, false);
+                this.unrideFromObject();
+                this._moveToFalling = true; // 1歩移動後、落下
+                return true;
+            }
         }
     }
-    */
     return false;
 }
 
@@ -602,16 +632,16 @@ Game_CharacterBase.prototype.isNormalPriority = function(): boolean {
 var _Game_CharacterBase_update = Game_CharacterBase.prototype.update;
 Game_CharacterBase.prototype.update = function() {
 
-    // MovingBehavior への通知
-    if (this._movingBehavior) {
-        if (this._movingBehavior.onOwnerUpdate(this)) {
+    // MovingSequel への通知
+    if (this._movingSequel) {
+        if (this._movingSequel.onOwnerUpdate(this)) {
             return;
         }
     }
-    if (this._movingBehaviorOwnerCharacterId >= 0) {
-        let character = MovingHelper.getCharacterById(this._movingBehaviorOwnerCharacterId);
-        if (character._movingBehavior) {
-            if (character._movingBehavior.onTargetUpdate(this)) {
+    if (this._movingSequelOwnerCharacterId >= 0) {
+        let character = MovingHelper.getCharacterById(this._movingSequelOwnerCharacterId);
+        if (character._movingSequel) {
+            if (character._movingSequel.onTargetUpdate(this)) {
                 return;
             }
         }
@@ -758,13 +788,13 @@ Game_CharacterBase.prototype.resetGetOnOffParams = function() {
  * 1歩歩き終わり、次の移動ができる状態になった
  */
 Game_CharacterBase.prototype.onStepEnd = function() {
-    if (this._movingBehavior) {
-        this._movingBehavior.onOwnerStepEnding(this);
+    if (this._movingSequel) {
+        this._movingSequel.onOwnerStepEnding(this);
     }
-    if (this._movingBehaviorOwnerCharacterId >= 0) {
-        let character = MovingHelper.getCharacterById(this._movingBehaviorOwnerCharacterId);
-        if (character._movingBehavior) {
-            character._movingBehavior.onTargetStepEnding(this);
+    if (this._movingSequelOwnerCharacterId >= 0) {
+        let character = MovingHelper.getCharacterById(this._movingSequelOwnerCharacterId);
+        if (character._movingSequel) {
+            character._movingSequel.onTargetStepEnding(this);
         }
     }
 

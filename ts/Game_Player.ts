@@ -17,7 +17,7 @@ Game_Player.prototype.isCollided = function(x: number, y: number): boolean {
 
 var _Game_Player_canMove = Game_Player.prototype.canMove;
 Game_Player.prototype.canMove = function(): boolean {
-    if (this._movingBehavior) {
+    if (this._movingSequel) {
         // 移動制御中のタッチ移動や接触イベント起動を禁止
         return false;
     }
@@ -26,7 +26,7 @@ Game_Player.prototype.canMove = function(): boolean {
 
 var _Game_Player_isDashing = Game_Player.prototype.isDashing;
 Game_Player.prototype.isDashing = function(): boolean {
-    if (this._movingBehavior) {
+    if (this._movingSequel) {
         // 移動制御中のタッチ移動や接触イベント起動を禁止
         return false;
     }

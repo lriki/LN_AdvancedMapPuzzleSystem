@@ -90,6 +90,10 @@ Game_Event.prototype.objectHeight = function(): number {
     return this._objectHeight;
 };
 
+Game_Event.prototype.isFallable = function(): boolean {
+    return this._fallable;
+};
+
 Game_Event.prototype.reactionMapSkill = function(): string {
     return this._reactionMapSkill;
 };
