@@ -15,7 +15,7 @@
  * 
  */
 
-import { assert, ObjectType } from './Common'
+import { assert } from './Common'
 import { MovingHelper } from './MovingHelper'
 import { AMPS_SoundManager } from "./SoundManager";
 import { MovingSequel, MovingSequel_PushMoving } from "./MovingSequel";
@@ -39,7 +39,11 @@ enum FallingState {
 
 declare global {
     interface Game_CharacterBase {
-        _objectType: ObjectType;
+        // ObjectType
+        _objectTypeBox: boolean;
+        _objectTypeEffect: boolean;
+        _objectTypeReactor: boolean;
+
         _ridderCharacterId: number; // this に乗っているオブジェクト (this の上にあるオブジェクト)
         _riddeeCharacterId: number; // this が乗っているオブジェクと (this の下にあるオブジェクト)
         _waitAfterJump: number;
@@ -60,8 +64,10 @@ declare global {
 
         isRidding(): boolean;
         isMapObject(): boolean;
+        isBoxType(): boolean;
+        isEffectType(): boolean;
+        isReactorType(): boolean;
         objectId(): number;
-        objectType(): ObjectType;
         objectHeight(): number;
         isMover(): boolean;
         canRide(): boolean;
@@ -85,7 +91,7 @@ declare global {
         rideToObject(riddenObject: Game_CharacterBase): void;
         unrideFromObject(): void;
         moveToDir(d: number, withAjust: boolean): void;
-        jumpToDir(d: number, len: number, toObj: boolean): void;
+        jumpToDir(d: number, len: number, toObj: boolean, extraJumping: boolean): void;
         startFall(): void;
         resetGetOnOffParams(): void;
 
@@ -100,7 +106,9 @@ declare global {
 var _Game_CharacterBase_initMembers = Game_CharacterBase.prototype.initMembers;
 Game_CharacterBase.prototype.initMembers = function() {
     _Game_CharacterBase_initMembers.call(this);
-    this._objectType = ObjectType.Character;
+    this._objectTypeBox = false;
+    this._objectTypeEffect = false;
+    this._objectTypeReactor = false;
     this._ridderCharacterId = -1;
     this._riddeeCharacterId = -1;
     this._waitAfterJump = 0;
@@ -170,8 +178,18 @@ Game_CharacterBase.prototype.isMapObject = function() {
     return false;
 };
 
-Game_Event.prototype.objectType = function() {
-    return this._objectType;
+
+Game_CharacterBase.prototype.isMapObject = function() {
+    return this.isBoxType() || this.isEffectType() || this.isReactorType();
+};
+Game_CharacterBase.prototype.isBoxType = function(): boolean  {
+    return this._objectTypeBox;
+};
+Game_CharacterBase.prototype.isEffectType = function(): boolean  {
+    return this._objectTypeEffect;
+};
+Game_CharacterBase.prototype.isReactorType = function(): boolean  {
+    return this._objectTypeReactor;
 };
 
 /**
@@ -180,10 +198,6 @@ Game_Event.prototype.objectType = function() {
 Game_CharacterBase.prototype.objectId = function(): number {
     return -1;
 };
-
-Game_CharacterBase.prototype.objectType = function(): ObjectType {
-    return this._objectType;
-}
 
 // マップオブジェクトとしての高さ。
 // 高さを持たないのは -1。
@@ -195,7 +209,7 @@ Game_CharacterBase.prototype.objectHeight = function() {
  * 自分から移動する人。箱オブジェクトを動かせるかどうか。マップオブジェクトは基本的に false。自分から移動はしない。
  */
 Game_CharacterBase.prototype.isMover = function() {
-    return this.objectType() == ObjectType.Character;
+    return !this._objectTypeBox;
 };
 
 Game_CharacterBase.prototype.canRide = function() {
@@ -320,7 +334,7 @@ Game_CharacterBase.prototype.moveStraightMain = function(d: number) {
  */
 Game_CharacterBase.prototype.attemptMoveGroundToGround = function(d: number): boolean {
     // TODO: これ以上 type が増えそうなら Behavior に独立を考える
-    if (this.objectType() == ObjectType.Box && !this.isThrough()) {// && !this.isFalling()) {
+    if (this.isBoxType() && !this.isThrough()) {// && !this.isFalling()) {
         var dx = Math.round(MovingHelper.roundXWithDirectionLong(this._x, d, 1));
         var dy = Math.round(MovingHelper.roundYWithDirectionLong(this._y, d, 1));
         if ($gameMap.terrainTag(dx, dy) == paramGuideLineTerrainTag && this.isMapPassable(this._x, this._y, d)) {
@@ -369,7 +383,7 @@ Game_CharacterBase.prototype.attemptMoveGroundToGround = function(d: number): bo
 Game_CharacterBase.prototype.attemptJumpGroundToGround = function(d): boolean {
     if (MovingHelper.canPassJumpGroundToGround(this, this._x, this._y, d)) {
         this.setMovementSuccess(true);
-        this.jumpToDir(d, 2, false);
+        this.jumpToDir(d, 2, false, true);
         this._movingMode = MovingMode.GroundToGround;
         return true;
     }
@@ -382,7 +396,7 @@ Game_CharacterBase.prototype.attemptJumpGroundToGround = function(d): boolean {
 Game_CharacterBase.prototype.attemptJumpGroove = function(d: number): boolean {
     if (MovingHelper.canPassJumpGroove(this, this._x, this._y, d)) {
         this.setMovementSuccess(true);
-        this.jumpToDir(d, 2, false);
+        this.jumpToDir(d, 2, false, false);
         this._movingMode = MovingMode.GroundToGround;
         return true;
     }
@@ -415,7 +429,7 @@ Game_CharacterBase.prototype.attemptJumpGroundToObject = function(d: number): bo
         this.setMovementSuccess(true);
         // 乗る
         this.resetGetOnOffParams();
-        this.jumpToDir(d, 2, true);
+        this.jumpToDir(d, 2, true, true);
         this.rideToObject(obj);
         this._movingMode = MovingMode.GroundToObject;
         return true;
@@ -438,7 +452,7 @@ Game_CharacterBase.prototype.attemptMoveObjectToGround = function(d: number): bo
     }
     else {
         // TODO: これ以上 type が増えそうなら Behavior に独立を考える
-        if (this.objectType() == ObjectType.Box && this.isFallable()) {
+        if (this.isBoxType() && this.isFallable()) {
             if (!MovingHelper.checkFacingOtherEdgeTile(this._x, this._y, d, 1)) {
                 this.setMovementSuccess(true);
                 this.resetGetOnOffParams();
@@ -476,7 +490,7 @@ Game_CharacterBase.prototype.attemptMoveObjectToObject = function(d: number): bo
 Game_CharacterBase.prototype.attemptJumpObjectToGround = function(d: number): boolean {
     if (MovingHelper.checkMoveOrJumpObjectToGround(this, this._x, this._y, d, 2)) {
         this.setMovementSuccess(true);
-        this.jumpToDir(d, 2, false);
+        this.jumpToDir(d, 2, false, true);
         this.unrideFromObject();
         this._movingMode = MovingMode.ObjectToGround;
         return true;
@@ -492,7 +506,7 @@ Game_CharacterBase.prototype.attemptJumpObjectToObject = function(d: number): bo
     if (obj) {
         this.setMovementSuccess(true);
         this.resetGetOnOffParams();
-        this.jumpToDir(d, 2, true);
+        this.jumpToDir(d, 2, true, true);
         this.unrideFromObject();
         this.rideToObject(obj);
         this._movingMode = MovingMode.ObjectToObject;
@@ -558,8 +572,9 @@ Game_CharacterBase.prototype.moveToDir = function(d: number, withAjust: boolean)
 /**
  * 方向と距離を指定してジャンプ開始
  * @param toObj: オブジェクトへ乗ろうとするときのジャンプ。座標の位置合わせを行う。
+ * @param extraJumping: プライオリティを最前面にするか。ホールタイルジャンプでは false にしておかないと、木の背面にジャンプした時に表示がおかしくなる。
  */
-Game_CharacterBase.prototype.jumpToDir = function(d: number, len: number, toObj: boolean) {
+Game_CharacterBase.prototype.jumpToDir = function(d: number, len: number, toObj: boolean, extraJumping: boolean) {
     // x1, y1 は小数点以下を調整しない。ジャンプ後に 0.5 オフセット無くなるようにしたい
     var x1 = this._x;
     var y1 = this._y;
@@ -581,7 +596,7 @@ Game_CharacterBase.prototype.jumpToDir = function(d: number, len: number, toObj:
     var y2 = Math.round(MovingHelper.roundYWithDirectionLong(this._y, d, len));
     this.jump(x2 - x1, y2 - y1);
     this._waitAfterJump = JUMP_WAIT_COUNT;
-    this._extraJumping = true;
+    this._extraJumping = extraJumping;
     AMPS_SoundManager.playGSJump();
 }
 

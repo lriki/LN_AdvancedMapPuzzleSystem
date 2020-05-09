@@ -4,7 +4,6 @@
 // MovingHelper
 // 　
 
-import { ObjectType } from "./Common";
 import { paramGuideLineTerrainTag } from './PluginParameters'
 
 export interface MovingResult {
@@ -367,7 +366,7 @@ export class MovingHelper {
         var new_y = Math.round(MovingHelper.roundYWithDirectionLong(y, d, length));
 
         // 箱オブジェクトは特定の地形タグ上へのみ移動できる
-        if (character.objectType() == ObjectType.Box && !character.isFalling()) {
+        if (character.isBoxType() && !character.isFalling()) {
             if ($gameMap.terrainTag(new_x, new_y) != paramGuideLineTerrainTag) {
                 return false;
             }

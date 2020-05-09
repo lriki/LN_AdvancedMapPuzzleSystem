@@ -1,6 +1,6 @@
 /// <reference types="rpgmakermv_typescript_dts"/>
 import { paramMapSkillEffectsMapId } from './PluginParameters'
-import { ObjectType, strToObjectType, EventTrigger, strToEventTrigger, assert } from './Common'
+import { EventTrigger, strToEventTrigger, assert } from './Common'
 import { AMPSManager } from './AMPSManager';
 import { MovingHelper } from './MovingHelper';
 
@@ -58,7 +58,6 @@ declare global {
 var _Game_Event_initMembers = Game_Event.prototype.initMembers;
 Game_Event.prototype.initMembers = function() {
     _Game_Event_initMembers.call(this);
-    this._objectType = ObjectType.Character;
     this._objectHeight = -1;
     this._fallable = false;
     this._mapObjectEventTrigger = EventTrigger.None;
@@ -76,10 +75,6 @@ Game_Event.prototype.event = function(): IDataMapEvent {
     }
     else
         return _Game_Event_prototype_event.call(this);
-};
-
-Game_Event.prototype.isMapObject = function() {
-    return this._objectType != ObjectType.Character;
 };
 
 Game_Event.prototype.objectId = function(): number {
@@ -154,7 +149,7 @@ Game_Event.prototype.setupPage = function() {
         oldRider.jump(0, oldHeight);
     }
 
-    if (this._objectType == ObjectType.Effect && this._mapObjectEventTrigger == EventTrigger.OnSpawnedAsEffect) {
+    if (this.isEffectType() && this._mapObjectEventTrigger == EventTrigger.OnSpawnedAsEffect) {
         let involer = this.mapSkillEffectInvoker();
         if (involer) {
             let target = MovingHelper.findReactorMapObjectInLineRange(involer.x, involer.y, this.directionAsMapSkillEffect(), this._mapSkillRange, this.event().name ?? "");
@@ -167,7 +162,9 @@ Game_Event.prototype.setupPage = function() {
 
 Game_Event.prototype.parseListCommentForAMPSObject = function(): boolean {
     // reset object status
-    this._objectType = ObjectType.Character;
+    this._objectTypeBox = false;
+    this._objectTypeEffect = false;
+    this._objectTypeReactor = false;
     this._objectHeight = -1;
     this._fallable = false;
     this._mapObjectEventTrigger = EventTrigger.None;
@@ -197,10 +194,30 @@ Game_Event.prototype.parseListCommentForAMPSObject = function(): boolean {
             let nvps = block.split(",");
             for (let i = 0; i < nvps.length; i++) {
                 let tokens = nvps[i].split(":");
-                switch (tokens[0].trim())
+                switch (tokens[0].trim().toLocaleLowerCase())
                 {
                     case "type":
-                        this._objectType = strToObjectType(tokens[1].trim()); 
+                        console.error("@MapObject.type is deprecated. use 'box:true'");
+                        switch (tokens[1].trim().toLocaleLowerCase()) {
+                            case 'box':
+                                this._objectTypeBox = true;
+                                break;
+                            case 'effect':
+                                this._objectTypeEffect = true;
+                                break;
+                            case 'reactor':
+                                this._objectTypeReactor = true;
+                                break;
+                        }
+                        break;
+                    case "box":
+                        this._objectTypeBox = (tokens.length >= 2) ? Boolean(tokens[1].trim()) : true;
+                        break;
+                    case "effect":
+                        this._objectTypeEffect = (tokens.length >= 2) ? Boolean(tokens[1].trim()) : true;
+                        break;
+                    case "reactor":
+                        this._objectTypeReactor = (tokens.length >= 2) ? Boolean(tokens[1].trim()) : true;
                         break;
                     case "h":
                     case "height":
@@ -238,7 +255,7 @@ Game_Event.prototype.parseListCommentForAMPSObject = function(): boolean {
  */
 var _Game_Event_start = Game_Event.prototype.start;
 Game_Event.prototype.start = function() {
-    if (this.objectType() == ObjectType.Reactor) {
+    if (this.isReactorType()) {
     }
     else {
         _Game_Event_start.call(this);

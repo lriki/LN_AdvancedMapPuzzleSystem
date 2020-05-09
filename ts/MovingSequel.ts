@@ -1,5 +1,4 @@
 import { MovingHelper } from "./MovingHelper";
-import { ObjectType } from "./Common";
 
 
 /**
@@ -69,7 +68,7 @@ export class MovingSequel_PushMoving extends MovingSequel {
     }
 
     static checkPushable(obj: Game_CharacterBase) {
-        return obj.objectType() == ObjectType.Box && !obj.rider();
+        return obj.isBoxType() && !obj.rider();
     };
 
     static tryStartPushObjectAndMove(character: Game_CharacterBase, d: number): boolean {
