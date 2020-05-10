@@ -409,7 +409,7 @@ Game_CharacterBase.prototype.attemptJumpGroove = function(d: number): boolean {
  */
 Game_CharacterBase.prototype.attemptMoveGroundToObject = function(d: number, ignoreMapPassable: boolean): boolean {
     var obj = MovingHelper.checkMoveOrJumpGroundToObject(this._x, this._y, d, 1, ignoreMapPassable);
-    if (obj) {
+    if (obj && obj != this) {   // 高さ1のオブジェクトを上に移動しようとしたときにできない場合は this を返すので、ここではじく
         this.setMovementSuccess(true);
         this.resetGetOnOffParams();
         this.moveToDir(d, true);
@@ -425,7 +425,7 @@ Game_CharacterBase.prototype.attemptMoveGroundToObject = function(d: number, ign
  */
 Game_CharacterBase.prototype.attemptJumpGroundToObject = function(d: number): boolean {
     var obj = MovingHelper.checkMoveOrJumpGroundToObject(this._x, this._y, d, 2, false);
-    if (obj) {
+    if (obj && obj != this) {   // 高さ1のオブジェクトを上に移動しようとしたときにできない場合は this を返すので、ここではじく
         this.setMovementSuccess(true);
         // 乗る
         this.resetGetOnOffParams();
@@ -528,6 +528,7 @@ Game_CharacterBase.prototype.rideToObject = function(riddenObject: Game_Characte
 
     this._riddeeCharacterId = riddenObject.objectId();
     riddenObject._ridderCharacterId = this.objectId();
+    assert(this._riddeeCharacterId != riddenObject._ridderCharacterId);
 
     var oldZ = this._ridingScreenZPriority;
     this._ridingScreenZPriority = -1;
