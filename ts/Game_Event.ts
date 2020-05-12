@@ -155,7 +155,8 @@ Game_Event.prototype.setupPage = function() {
 
     this.parseListCommentForAMPSObject();
     
-    if (this.objectHeight() == 0 && oldRider) {
+    // setupPage によって MapObject ではなった時、上に乗っているオブジェクトがいれば強制的に落下させる
+    if (!this.isMapObject() && oldRider) {
         oldRider.jump(0, oldHeight);
     }
 
@@ -299,5 +300,17 @@ Game_Event.prototype.updateParallel = function() {
 Game_Event.prototype.onTerminateParallelEvent = function() {
     if (this.isDynamicMapEffectEvent()) {
         $gameMap.despawnMapSkillEffectEvent(this);
+    }
+}
+
+Game_Event.prototype.onRideOnEvent = function() {
+    if (this._mapObjectEventTrigger === EventTrigger.OnRideOnEvent) {
+        this.start();
+    }
+}
+
+Game_Event.prototype.onStartFalling = function() {
+    if (this._mapObjectEventTrigger === EventTrigger.OnStartFalling) {
+        this.start();
     }
 }

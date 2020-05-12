@@ -19,7 +19,7 @@ import { assert } from './Common'
 import { MovingHelper } from './MovingHelper'
 import { AMPS_SoundManager } from "./SoundManager";
 import { MovingSequel, MovingSequel_PushMoving } from "./MovingSequel";
-import { paramGuideLineTerrainTag } from './PluginParameters';
+import { paramGuideLineTerrainTag, paramFallingSpeed } from './PluginParameters';
 
 const JUMP_WAIT_COUNT   = 10;
 
@@ -51,8 +51,11 @@ declare global {
         _ridingScreenZPriority: number;
         _movingMode: MovingMode;
         _forcePositionAdjustment: boolean;  // moveToDir 移動時、移動先位置を強制的に round するかどうか（半歩移動の封印）
+
         _moveToFalling: boolean;    // 現在の移動ステップが終わったら落下する
         _fallingState: FallingState;
+        _fallingOriginalSpeed: number;
+        _fallingOriginalThrough: boolean;
         
         _movingSequel: MovingSequel | undefined;
         _movingSequelOwnerCharacterId: number;
@@ -93,11 +96,13 @@ declare global {
         moveToDir(d: number, withAjust: boolean): void;
         jumpToDir(d: number, len: number, toObj: boolean, extraJumping: boolean): void;
         startFall(): void;
+        updateFall(): void;
         resetGetOnOffParams(): void;
 
         onStepEnd(): void;
         onJumpEnd(): void;
-        onCharacterRideOn(): void;
+        onRideOnEvent(): void;
+        onStartFalling(): void;
 
         isHalfMove(): boolean;
     }
@@ -116,8 +121,11 @@ Game_CharacterBase.prototype.initMembers = function() {
     this._ridingScreenZPriority = -1;
     this._movingMode = MovingMode.Stopping;
     this._forcePositionAdjustment = false;
+
     this._moveToFalling = false;
     this._fallingState = FallingState.None;
+    this._fallingOriginalSpeed = 0;
+    this._fallingOriginalThrough = false;
 
     this._movingSequel = undefined;
     this._movingSequelOwnerCharacterId = -1;
@@ -173,11 +181,6 @@ Game_CharacterBase.prototype.moveDiagonally = function (horz: number, vert: numb
 Game_CharacterBase.prototype.isRidding = function(): boolean {
     return this._riddeeCharacterId >= 0;
 }
-
-Game_CharacterBase.prototype.isMapObject = function() {
-    return false;
-};
-
 
 Game_CharacterBase.prototype.isMapObject = function() {
     return this.isBoxType() || this.isEffectType() || this.isReactorType();
@@ -260,10 +263,6 @@ Game_CharacterBase.prototype.riddingObject = function(): Game_CharacterBase | un
         return $gameMap.event(this._riddeeCharacterId);
     }
 }
-
-Game_CharacterBase.prototype.isFalling = function(): boolean {
-    return false;
-};
 
 /**
  * 落下中であるか？
@@ -451,7 +450,7 @@ Game_CharacterBase.prototype.attemptMoveObjectToGround = function(d: number): bo
         return true;
     }
     else {
-        // TODO: これ以上 type が増えそうなら Behavior に独立を考える
+        // FIXME: これ以上 type が増えそうなら Behavior に独立を考える
         if (this.isBoxType() && this.isFallable()) {
             if (!MovingHelper.checkFacingOtherEdgeTile(this._x, this._y, d, 1)) {
                 this.setMovementSuccess(true);
@@ -491,7 +490,7 @@ Game_CharacterBase.prototype.attemptJumpObjectToGround = function(d: number): bo
     if (MovingHelper.checkMoveOrJumpObjectToGround(this, this._x, this._y, d, 2)) {
         this.setMovementSuccess(true);
         this.jumpToDir(d, 2, false, true);
-        this.unrideFromObject();
+        //this.unrideFromObject();
         this._movingMode = MovingMode.ObjectToGround;
         return true;
     }
@@ -507,7 +506,7 @@ Game_CharacterBase.prototype.attemptJumpObjectToObject = function(d: number): bo
         this.setMovementSuccess(true);
         this.resetGetOnOffParams();
         this.jumpToDir(d, 2, true, true);
-        this.unrideFromObject();
+        //this.unrideFromObject();
         this.rideToObject(obj);
         this._movingMode = MovingMode.ObjectToObject;
         return true;
@@ -517,6 +516,18 @@ Game_CharacterBase.prototype.attemptJumpObjectToObject = function(d: number): bo
 
 //------------------------------------------------------------------------------
 // 実際に移動を行う系
+
+/**
+ * この Character を、指定したオブジェクトへ乗せる
+ */
+var _Game_CharacterBase_jump = Game_CharacterBase.prototype.jump;
+Game_CharacterBase.prototype.jump = function(xPlus, yPlus) {
+    _Game_CharacterBase_jump.call(this, xPlus, yPlus);
+
+    if (this.isRidding()) {
+        this.unrideFromObject();
+    }
+}
 
 /**
  * この Character を、指定したオブジェクトへ乗せる
@@ -603,17 +614,13 @@ Game_CharacterBase.prototype.jumpToDir = function(d: number, len: number, toObj:
 
 // 現在位置から落下開始
 Game_CharacterBase.prototype.startFall = function() {
-    console.log("not implemented.");
-    /*
-    this._fallingState = Game_BattlerBase.FAILLING_STATE_FAILLING;
-    this._fallingOriginalThrough = this.isThrough(d);
+    this._fallingState = FallingState.Failling;
+    this._fallingOriginalThrough = this.isThrough();
     this._fallingOriginalSpeed = this.moveSpeed();
     this.setThrough(true);
-    this.setMoveSpeed(paramFallSpeed);
-    this.onStartedFalling();
-    //this.moveStraightInternal(2);
+    this.setMoveSpeed(paramFallingSpeed);
+    this.onStartFalling();
     // 地面へ落ちるか、オブジェクトに乗るかは次の update で決める
-    */
 }
 
 var _Game_CharacterBase_isMoving = Game_CharacterBase.prototype.isMoving;
@@ -666,8 +673,7 @@ Game_CharacterBase.prototype.update = function() {
     _Game_CharacterBase_update.call(this);
 
     if (this.isFalling()) {
-        console.log("not implemented.");
-        //this.updateFall();
+        this.updateFall();
     }
 
     // 停止中の場合は乗っているオブジェクトの座標に同期する (乗ったまま移動)
@@ -790,6 +796,52 @@ Game_CharacterBase.prototype.updateJump = function() {
     }
 }
 
+/**
+ * 落下中更新
+ */
+Game_CharacterBase.prototype.updateFall = function() {
+        
+    //_Game_CharacterBase_updateMove.apply(this, arguments);
+    
+    if (!this.isMoving()) {
+        if (this._fallingState == FallingState.Failling) {
+
+            if ($gameMap.terrainTag(this._x, this._y) == paramGuideLineTerrainTag) {
+                // ガイドラインのタイルまで進んだら落下終了
+                this._fallingState = FallingState.EpilogueToRide;
+                //this._fallingState = Game_BattlerBase.FAILLING_STATE_NONE;
+                //this.setThrough(this._fallingOriginalThrough);
+                //this.setMoveSpeed(this._fallingOriginalSpeed);
+                //this.onStepEnd();
+                //SoundManager.playGSFalled();
+                //return;
+            }
+            // 乗れそうなオブジェクトへ地形判定無視で移動してみる
+            else if (this.attemptMoveGroundToObject(2, true)) {
+                this._fallingState = FallingState.EpilogueToRide;
+                // オブジェクトに乗るように移動開始できた。
+                // 状態だけ戻して、以降は移動として処理する。
+                //this._falling = false;
+                //this.setThrough(this._fallingOriginalThrough);
+                //this.setMoveSpeed(this._fallingOriginalSpeed);
+                //return;
+            }
+            else {
+                this.moveStraightMain(2);
+            }
+        }
+        
+        if (this._fallingState == FallingState.EpilogueToRide) {
+            // 落下終了
+            this._fallingState = FallingState.None;
+            this.setThrough(this._fallingOriginalThrough);
+            this.setMoveSpeed(this._fallingOriginalSpeed);
+            this.onStepEnd();
+            AMPS_SoundManager.playGSFalled();
+        }
+    }
+}
+
 Game_CharacterBase.prototype.resetGetOnOffParams = function() {
     this._getonoffFrameMax = (1.0 / this.distancePerFrame());
     this._getonoffFrameCount = 0;
@@ -817,7 +869,7 @@ Game_CharacterBase.prototype.onStepEnd = function() {
     // 何かに乗っていたら通知
     var riddingObject = this.riddingObject();
     if (riddingObject) {
-        riddingObject.onCharacterRideOn();
+        riddingObject.onRideOnEvent();
     }
 }
 
@@ -828,16 +880,21 @@ Game_CharacterBase.prototype.onJumpEnd = function() {
     var obj = this.riddingObject();
     if (obj) {
         // 何かに乗っていたら通知
-        obj.onCharacterRideOn();
+        obj.onRideOnEvent();
     }
 }
 
 /**
  * 他のキャラクターが上に乗った
  */
-Game_CharacterBase.prototype.onCharacterRideOn = function() {
+Game_CharacterBase.prototype.onRideOnEvent = function() {
 }
 
+/**
+ * 落下を開始した
+ */
+Game_CharacterBase.prototype.onStartFalling = function() {
+}
 
 //------------------------------------------------------------------------------
 // HalfMove.js 対策
