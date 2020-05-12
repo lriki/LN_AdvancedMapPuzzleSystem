@@ -11,7 +11,7 @@ can see a sample screen on the [Gallery page](docs/Gallery.md).
 
 | Version | File |
 |---------|------|
-| v0.3.0  | [:arrow_down: LN_AdvancedMapPuzzleSystem.js](https://raw.githubusercontent.com/lriki/LN_AdvancedMapPuzzleSystem/master/js/plugins/LN_AdvancedMapPuzzleSystem.js) |
+| v0.3.1  | [:arrow_down: LN_AdvancedMapPuzzleSystem.js](https://raw.githubusercontent.com/lriki/LN_AdvancedMapPuzzleSystem/master/js/plugins/LN_AdvancedMapPuzzleSystem.js) |
 
 Create a new project in RPG Maker MV and overwrite all files downloaded from [here :arrow_down:](https://github.com/lriki/LN_AdvancedMapPuzzleSystem/archive/master.zip).
 
