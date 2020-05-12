@@ -172,79 +172,81 @@ Game_Event.prototype.parseListCommentForAMPSObject = function(): boolean {
     this._reactionMapSkill = '';
     this._mapSkillEffectInitialPosition = MapSkillEffectInitialPosition.Default;
 
-    let list = this.list();
-    if (list) {
-        // collect comments
-        let comments = "";
-        for (let i = 0; i < list.length; i++) {
-            if (list[i].code == 108 || list[i].code == 408) {
-                if (list[i].parameters) {
-                    comments += list[i].parameters;
+    if (this._pageIndex >= 0) {
+        let list = this.list();
+        if (list) {
+            // collect comments
+            let comments = "";
+            for (let i = 0; i < list.length; i++) {
+                if (list[i].code == 108 || list[i].code == 408) {
+                    if (list[i].parameters) {
+                        comments += list[i].parameters;
+                    }
                 }
             }
-        }
-
-        let index = comments.indexOf("@MapObject");
-        if (index >= 0) {
-            let block = comments.substring(index + 6);
-            block = block.substring(
-            block.indexOf("{") + 1,
-            block.indexOf("}"));
-
-            let nvps = block.split(",");
-            for (let i = 0; i < nvps.length; i++) {
-                let tokens = nvps[i].split(":");
-                switch (tokens[0].trim().toLocaleLowerCase())
-                {
-                    case "type":
-                        console.error("@MapObject.type is deprecated. use 'box:true'");
-                        switch (tokens[1].trim().toLocaleLowerCase()) {
-                            case 'box':
-                                this._objectTypeBox = true;
-                                break;
-                            case 'effect':
-                                this._objectTypeEffect = true;
-                                break;
-                            case 'reactor':
-                                this._objectTypeReactor = true;
-                                break;
-                        }
-                        break;
-                    case "box":
-                        this._objectTypeBox = (tokens.length >= 2) ? Boolean(tokens[1].trim()) : true;
-                        break;
-                    case "effect":
-                        this._objectTypeEffect = (tokens.length >= 2) ? Boolean(tokens[1].trim()) : true;
-                        break;
-                    case "reactor":
-                        this._objectTypeReactor = (tokens.length >= 2) ? Boolean(tokens[1].trim()) : true;
-                        break;
-                    case "h":
-                    case "height":
-                        this._objectHeight = Number(tokens[1].trim()); 
-                        break;
-                    case "fallable":
-                        this._fallable = (tokens[1].trim() == 'true') ? true : false;
-                        break;
-                    case "trigger":
-                        this._mapObjectEventTrigger = strToEventTrigger(tokens[1].trim()); 
-                        break;
-                    case "range":
-                        this._mapSkillRange = Number(tokens[1].trim()); 
-                        break;
-                    case "reaction":
-                        this._reactionMapSkill = tokens[1].trim().toLocaleLowerCase(); 
-                        break;
-                    case "pos":
-                        switch (tokens[1].trim().toLocaleLowerCase()) {
-                            case "front":
-                                this._mapSkillEffectInitialPosition = MapSkillEffectInitialPosition.Front; 
-                        }
-                        break;
+    
+            let index = comments.indexOf("@MapObject");
+            if (index >= 0) {
+                let block = comments.substring(index + 6);
+                block = block.substring(
+                block.indexOf("{") + 1,
+                block.indexOf("}"));
+    
+                let nvps = block.split(",");
+                for (let i = 0; i < nvps.length; i++) {
+                    let tokens = nvps[i].split(":");
+                    switch (tokens[0].trim().toLocaleLowerCase())
+                    {
+                        case "type":
+                            console.error("@MapObject.type is deprecated. use 'box:true'");
+                            switch (tokens[1].trim().toLocaleLowerCase()) {
+                                case 'box':
+                                    this._objectTypeBox = true;
+                                    break;
+                                case 'effect':
+                                    this._objectTypeEffect = true;
+                                    break;
+                                case 'reactor':
+                                    this._objectTypeReactor = true;
+                                    break;
+                            }
+                            break;
+                        case "box":
+                            this._objectTypeBox = (tokens.length >= 2) ? Boolean(tokens[1].trim()) : true;
+                            break;
+                        case "effect":
+                            this._objectTypeEffect = (tokens.length >= 2) ? Boolean(tokens[1].trim()) : true;
+                            break;
+                        case "reactor":
+                            this._objectTypeReactor = (tokens.length >= 2) ? Boolean(tokens[1].trim()) : true;
+                            break;
+                        case "h":
+                        case "height":
+                            this._objectHeight = Number(tokens[1].trim()); 
+                            break;
+                        case "fallable":
+                            this._fallable = (tokens[1].trim() == 'true') ? true : false;
+                            break;
+                        case "trigger":
+                            this._mapObjectEventTrigger = strToEventTrigger(tokens[1].trim()); 
+                            break;
+                        case "range":
+                            this._mapSkillRange = Number(tokens[1].trim()); 
+                            break;
+                        case "reaction":
+                            this._reactionMapSkill = tokens[1].trim().toLocaleLowerCase(); 
+                            break;
+                        case "pos":
+                            switch (tokens[1].trim().toLocaleLowerCase()) {
+                                case "front":
+                                    this._mapSkillEffectInitialPosition = MapSkillEffectInitialPosition.Front; 
+                            }
+                            break;
+                    }
                 }
+    
+                return true;
             }
-
-            return true;
         }
     }
     return false;
