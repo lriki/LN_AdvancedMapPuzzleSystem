@@ -36,6 +36,7 @@ declare global {
         _reactionMapSkill: string;  // "reaction:" の値を toLocaleLowerCase したもの。
 
         //objectType(): ObjectType;
+        isDynamicMapEffectEvent(): boolean;
         reactionMapSkill(): string;
         mapSkillEffectInvoker(): Game_Character | undefined;
         directionAsMapSkillEffect(): number;
@@ -68,13 +69,18 @@ Game_Event.prototype.initMembers = function() {
 
 var _Game_Event_prototype_event = Game_Event.prototype.event;
 Game_Event.prototype.event = function(): IDataMapEvent {
-    if ($dataMapSkillEffectsMap.events && this._mapId === paramMapSkillEffectsMapId) {
-        assert(this._mapSkillEffectDataId >= 0);
-        // エフェクト定義Map から複製された DynamicEvent はそちらからデータをとる
-        return $dataMapSkillEffectsMap.events[this._mapSkillEffectDataId];
+    
+    if (paramMapSkillEffectsMapId > 0) {
+        let dataEffectsMap = AMPSManager.dataMapSkillEffectsMap();
+        if (dataEffectsMap && dataEffectsMap.events && this.isDynamicMapEffectEvent()) {
+            // エフェクト定義Map から複製された DynamicEvent はそちらからデータをとる
+            return dataEffectsMap.events[this._mapSkillEffectDataId];
+        }
     }
-    else
-        return _Game_Event_prototype_event.call(this);
+
+    return _Game_Event_prototype_event.call(this);
+
+    
 };
 
 Game_Event.prototype.objectId = function(): number {
@@ -87,6 +93,10 @@ Game_Event.prototype.objectHeight = function(): number {
 
 Game_Event.prototype.isFallable = function(): boolean {
     return this._fallable;
+};
+
+Game_Event.prototype.isDynamicMapEffectEvent = function(): boolean {
+    return this._mapId === paramMapSkillEffectsMapId && this._mapSkillEffectDataId >= 0;
 };
 
 Game_Event.prototype.reactionMapSkill = function(): string {
@@ -287,7 +297,7 @@ Game_Event.prototype.updateParallel = function() {
 }
 
 Game_Event.prototype.onTerminateParallelEvent = function() {
-    if (this._mapId === paramMapSkillEffectsMapId) {
+    if (this.isDynamicMapEffectEvent()) {
         $gameMap.despawnMapSkillEffectEvent(this);
     }
 }

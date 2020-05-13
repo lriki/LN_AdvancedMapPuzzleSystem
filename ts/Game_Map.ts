@@ -70,11 +70,15 @@ Game_Map.prototype.checkGroove = function(x: number, y: number) {
  * 
  */
 Game_Map.prototype.spawnMapSkillEffectEvent = function(name: string): Game_Event | undefined {
-    console.log($dataMapSkillEffectsMap);
-    if ($dataMapSkillEffectsMap.events) {
+    assert(paramMapSkillEffectsMapId > 0);
+
+    let dataEffectsMap = AMPSManager.dataMapSkillEffectsMap();
+    console.log("dataEffectsMap:");
+    console.log(dataEffectsMap);
+    if (dataEffectsMap && dataEffectsMap.events) {
         let eventDataId = -1;
-        for (let i = 0; i < $dataMapSkillEffectsMap.events.length; i++) {
-            if ($dataMapSkillEffectsMap.events[i] && $dataMapSkillEffectsMap.events[i].name == name) {
+        for (let i = 0; i < dataEffectsMap.events.length; i++) {
+            if (dataEffectsMap.events[i] && dataEffectsMap.events[i].name == name) {
                 eventDataId = i;
                 break;
             }

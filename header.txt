@@ -10,7 +10,7 @@
 //=============================================================================
 
 /*:ja
- * @plugindesc 謎解きマップシステムプラグイン v0.3.1
+ * @plugindesc 謎解きマップシステムプラグイン v0.3.2
  * @author lriki
  * @param MapSkillEffectsMapId
  * @desc TODO

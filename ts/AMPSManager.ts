@@ -1,13 +1,18 @@
 /// <reference types="rpgmakermv_typescript_dts"/>
 
+import { paramMapSkillEffectsMapId } from "./PluginParameters";
+
 //var $effectsMapData: IDataMap;
+//var $dataMap          = null;
 
 declare global {
     //var window: Window
-    var $dataMapSkillEffectsMap: IDataMap;
+    var $dataMapSkillEffectsMap: IDataMap | undefined;
 
 
 }
+
+//export var $dataMapSkillEffectsMap: IDataMap | undefined = undefined;
 
 /**
  * エフェクト定義用マップデータを読んだ後、Metadata を展開する
@@ -16,13 +21,15 @@ var _DataManager_onLoad = DataManager.onLoad;
 DataManager.onLoad = function(object: any) {
     _DataManager_onLoad.call(this, object);
 
-    if (object === $dataMapSkillEffectsMap) {
-        this.extractMetadata(object);
-        var array = object.events;
-        for (var i = 0; i < array.length; i++) {
-            var data = array[i];
-            if (data && data.note !== undefined) {
-                this.extractMetadata(data);
+    if (paramMapSkillEffectsMapId > 0) {
+        if (object === $dataMapSkillEffectsMap) {
+            this.extractMetadata(object);
+            var array = object.events;
+            for (var i = 0; i < array.length; i++) {
+                var data = array[i];
+                if (data && data.note !== undefined) {
+                    this.extractMetadata(data);
+                }
             }
         }
     }
@@ -31,9 +38,13 @@ DataManager.onLoad = function(object: any) {
 
 export class AMPSManager
 {
-    static effectsMapData: IDataMap;
+    
     static tempMapSkillEffectDataId: number = -1;
     static tempMapSkillEffectInvokerId: number = -1;
+
+    static dataMapSkillEffectsMap(): IDataMap | undefined {
+        return $dataMapSkillEffectsMap;
+    }
 
     static padZero(str: string, length: number): string {
         var s = str;
@@ -44,21 +55,23 @@ export class AMPSManager
     };
 
     static init() {
-        // エフェクト用のイベントが定義されている MapData を保持しておく
-        //DataManager.loadMapData(10);
-        //DataManager.loadDataFile('AMPSManager.effectsMapData', 'Map010.json');
-        DataManager.loadDataFile('$dataMapSkillEffectsMap', 'Map001.json');
-        //AMPSManager.effectsMapData = $dataMap;
-
-        //var ary = [1, 2, 3];
-        //ary[10] = 100;
-        //console.log(ary);
-
-        //let mapId = 10;
-        //let id = AMPSManager.padZero(String(mapId), 3);
-        //let filename = `Map${id}.json`;
-        //let mapLoader = ResourceHandler.createLoader('data/' + filename, this.loadDataFile.bind(this, '$dataMap', filename));
-        //DataManager.loadDataFile('$dataMap', filename);
+        if (paramMapSkillEffectsMapId > 0) {
+            // エフェクト用のイベントが定義されている MapData を保持しておく
+            //DataManager.loadMapData(10);
+            //DataManager.loadDataFile('AMPSManager.effectsMapData', 'Map010.json');
+            DataManager.loadDataFile('$dataMapSkillEffectsMap', 'Map001.json');
+            //AMPSManager.effectsMapData = $dataMap;
+    
+            //var ary = [1, 2, 3];
+            //ary[10] = 100;
+            //console.log(ary);
+    
+            //let mapId = 10;
+            //let id = AMPSManager.padZero(String(mapId), 3);
+            //let filename = `Map${id}.json`;
+            //let mapLoader = ResourceHandler.createLoader('data/' + filename, this.loadDataFile.bind(this, '$dataMap', filename));
+            //DataManager.loadDataFile('$dataMap', filename);
+        }
     }
 
     //static getCommandName(command: string): string {
