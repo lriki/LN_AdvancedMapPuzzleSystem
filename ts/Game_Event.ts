@@ -35,6 +35,7 @@ declare global {
         _mapSkillRange: number;
         _reactionMapSkill: string;  // "reaction:" の値を toLocaleLowerCase したもの。
 
+        clearMapObjectSettings(): void;
         //objectType(): ObjectType;
         isDynamicMapEffectEvent(): boolean;
         reactionMapSkill(): string;
@@ -55,6 +56,18 @@ declare global {
 //};
 //var _Game_Event_initialize = Game_Event.prototype.initialize;
 //Game_Event.prototype.initialize = new Game_Event_overload().initialize;
+
+Game_Event.prototype.clearMapObjectSettings = function(): void {
+    this._objectTypeBox = false;
+    this._objectTypeEffect = false;
+    this._objectTypeReactor = false;
+    this._objectHeight = -1;
+    this._fallable = false;
+    this._mapObjectEventTrigger = EventTrigger.None;
+    this._mapSkillRange = -1;
+    this._reactionMapSkill = '';
+    this._mapSkillEffectInitialPosition = MapSkillEffectInitialPosition.Default;
+}
 
 var _Game_Event_initMembers = Game_Event.prototype.initMembers;
 Game_Event.prototype.initMembers = function() {
@@ -79,8 +92,46 @@ Game_Event.prototype.event = function(): IDataMapEvent {
     }
 
     return _Game_Event_prototype_event.call(this);
+};
 
-    
+/**
+ * 決定ボタンやプレイヤーとの接触で起動するときの可否チェック
+ */
+var _Game_Event_isTriggerIn = Game_Event.prototype.isTriggerIn;
+Game_Event.prototype.isTriggerIn = function(triggers: number[]): boolean {
+    if (this._mapObjectEventTrigger !== EventTrigger.None) {
+        // trigger が指定されている場合、通常のイベント起動は行わない
+        return false;
+    }
+    else {
+        return _Game_Event_isTriggerIn.call(this, triggers);
+    }
+};
+
+/**
+ * [イベントから接触] 起動チェック
+ */
+var _Game_Event_checkEventTriggerTouch = Game_Event.prototype.checkEventTriggerTouch;
+Game_Event.prototype.checkEventTriggerTouch = function(x: number, y: number): any {
+    if (this._mapObjectEventTrigger !== EventTrigger.None) {
+        // trigger が指定されている場合、通常のイベント起動は行わない
+    }
+    else {
+        _Game_Event_checkEventTriggerTouch.call(this, x, y);
+    }
+};
+
+/**
+ * [自動実行] 起動チェック
+ */
+var _Game_Event_checkEventTriggerAuto = Game_Event.prototype.checkEventTriggerAuto;
+Game_Event.prototype.checkEventTriggerAuto = function() {
+    if (this._mapObjectEventTrigger !== EventTrigger.None) {
+        // trigger が指定されている場合、通常のイベント起動は行わない
+    }
+    else {
+        _Game_Event_checkEventTriggerAuto.call(this);
+    }
 };
 
 Game_Event.prototype.objectId = function(): number {
@@ -152,8 +203,6 @@ Game_Event.prototype.setupPage = function() {
     let oldRider = this.rider();
 
     _Game_Event_setupPage.call(this);
-
-    this.parseListCommentForAMPSObject();
     
     // setupPage によって MapObject ではなった時、上に乗っているオブジェクトがいれば強制的に落下させる
     if (!this.isMapObject() && oldRider) {
@@ -171,17 +220,30 @@ Game_Event.prototype.setupPage = function() {
     }
 }
 
+var _Game_Event_clearPageSettings = Game_Event.prototype.clearPageSettings;
+Game_Event.prototype.clearPageSettings = function() {
+    _Game_Event_clearPageSettings.call(this);
+    this.clearMapObjectSettings();
+}
+
+/**
+ * parse は setupPage() から呼ばれる setupPageSettings() の中で行う。
+ * setupPage() は setupPageSettings() が返ってくると自動実行イベントの起動を行おうとするが、
+ * trigger が指定されている場合はそれをキャンセルしたいので、先に MapObject の設定を読み取る必要がある。
+ */
+var _Game_Event_setupPageSettings = Game_Event.prototype.setupPageSettings;
+Game_Event.prototype.setupPageSettings = function() {
+    _Game_Event_setupPageSettings.call(this);
+    this.parseListCommentForAMPSObject();
+
+    // MapObject として trigger が設定されている場合は、並列実行用されないようにする
+    if (this._mapObjectEventTrigger != EventTrigger.None) {
+        this._interpreter = null;
+    }
+}
+
 Game_Event.prototype.parseListCommentForAMPSObject = function(): boolean {
-    // reset object status
-    this._objectTypeBox = false;
-    this._objectTypeEffect = false;
-    this._objectTypeReactor = false;
-    this._objectHeight = -1;
-    this._fallable = false;
-    this._mapObjectEventTrigger = EventTrigger.None;
-    this._mapSkillRange = -1;
-    this._reactionMapSkill = '';
-    this._mapSkillEffectInitialPosition = MapSkillEffectInitialPosition.Default;
+    this.clearMapObjectSettings();
 
     if (this._pageIndex >= 0) {
         let list = this.list();

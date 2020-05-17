@@ -344,16 +344,18 @@ Game_CharacterBase.prototype.attemptMoveGroundToGround = function(d: number): bo
         }
 
         // 移動先、崖落ちの落下移動できる？
-        if (this.isFallable() &&
-            $gameMap.terrainTag(this._x, this._y) == paramGuideLineTerrainTag &&
-            MovingHelper.checkFacingOutsideOnEdgeTile(this._x, this._y, d) &&
-            MovingHelper.checkMoveOrJumpObjectToObject(this._x, this._y, d, 1) == null) // 乗れそうなオブジェクトがないこと
-        {
-            this.moveToDir(d, false);
-            this.setMovementSuccess(true);
-            this._moveToFalling = true; // 1歩移動後、落下
-            return true;
+        if (this.isFallable()) {
+            if ($gameMap.terrainTag(this._x, this._y) == paramGuideLineTerrainTag &&
+                MovingHelper.checkFacingOutsideOnEdgeTile(this._x, this._y, d) &&
+                !MovingHelper.checkMoveOrJumpObjectToObject(this._x, this._y, d, 1)) // 乗れそうなオブジェクトがないこと
+            {
+                this.moveToDir(d, false);
+                this.setMovementSuccess(true);
+                this._moveToFalling = true; // 1歩移動後、落下
+                return true;
+            }
         }
+            
     }
     else {
         var oldX = this._x;

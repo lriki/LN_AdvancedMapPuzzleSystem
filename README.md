@@ -270,8 +270,6 @@ RPG ツクール MV で新規プロジェクトを作成し、[:arrow_down: こ�
 
 ### 箱オブジェクトの落下
 
-![ToDo](http://img.shields.io/badge/status-ToDo-red.svg?style=flat)
-
 エッジタイルの通行禁止方向に押して移動させたとき、落下することができます。
 
 ![](docs/img/15.gif)
@@ -286,8 +284,6 @@ RPG ツクール MV で新規プロジェクトを作成し、[:arrow_down: こ�
 
 
 ### 箱オブジェクトの積み重ね
-
-![ToDo](http://img.shields.io/badge/status-ToDo-red.svg?style=flat)
 
 落下中の箱オブジェクトは、下方向に別の箱オブジェクトがある場合、その上に乗ります。
 
@@ -304,10 +300,13 @@ RPG ツクール MV で新規プロジェクトを作成し、[:arrow_down: こ�
 
 
 
-### プレイヤーの乗降によるイベントの起動
+### キャラクターの乗降によるイベントの起動
 
-![ToDo](http://img.shields.io/badge/status-ToDo-red.svg?style=flat)
+パラメータとして `trigger:onRideOnEvent` を指定すると、キャラクターが上に乗った時にイベントを起動します。
 
+![](docs/img/19.gif)
+
+なお、`trigger` が指定されている場合、通常の "トリガー" によるイベント実行は行われません。
 
 ## マップオブジェクト - スイッチ
 
