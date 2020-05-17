@@ -73,8 +73,6 @@ Game_Map.prototype.spawnMapSkillEffectEvent = function(name: string): Game_Event
     assert(paramMapSkillEffectsMapId > 0);
 
     let dataEffectsMap = AMPSManager.dataMapSkillEffectsMap();
-    console.log("dataEffectsMap:");
-    console.log(dataEffectsMap);
     if (dataEffectsMap && dataEffectsMap.events) {
         let eventDataId = -1;
         for (let i = 0; i < dataEffectsMap.events.length; i++) {

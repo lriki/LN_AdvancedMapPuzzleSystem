@@ -59,7 +59,6 @@ export class MovingSequel {
  * 押して移動
  */
 export class MovingSequel_PushMoving extends MovingSequel {
-
     _ownerOrignalMovingSpeed: number;   // 押し移動前の移動速度を保存して、終わったら復元するのに使う
 
     constructor() {

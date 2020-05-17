@@ -150,7 +150,8 @@ export class MovingHelper {
         var x1 = Math.round(x);
         var y1 = Math.round(y);
         // 指定方向に出られなければ、エッジタイル上にいることにする
-        return !$gameMap.isPassable(x1, y1, d);
+        return !$gameMap.checkPassage(x1, y1, (1 << (d / 2 - 1)) & 0x0f);
+        //return !$gameMap.isPassable(x1, y1, d);
     }
 
     /**

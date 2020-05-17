@@ -6,3 +6,6 @@ export var paramMapSkillEffectsMapId = Number(PluginManager.parameters(pluginNam
 
 // ガイドラインの地形タグ
 export var paramGuideLineTerrainTag = Number(PluginManager.parameters(pluginName)["GuideLineTerrainTag"]);
+
+// オブジェクトの落下速度
+export var paramFallingSpeed = 5;

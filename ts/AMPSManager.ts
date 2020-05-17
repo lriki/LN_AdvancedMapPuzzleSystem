@@ -74,10 +74,6 @@ export class AMPSManager
         }
     }
 
-    //static getCommandName(command: string): string {
-    //    return (command || '').toUpperCase();
-    //};
-
     static pluginCommand = function(command: string, args: string[]) {
         switch (command) {
             case 'AMPS-MapSkill':

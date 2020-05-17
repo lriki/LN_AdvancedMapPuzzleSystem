@@ -13,7 +13,7 @@ English document in process: [English page](README.en_US.md)
 
 | Version | File |
 |---------|------|
-| v0.3.2  | [:arrow_down: LN_AdvancedMapPuzzleSystem.js](https://raw.githubusercontent.com/lriki/LN_AdvancedMapPuzzleSystem/master/js/plugins/LN_AdvancedMapPuzzleSystem.js) |
+| v0.4.0  | [:arrow_down: LN_AdvancedMapPuzzleSystem.js](https://raw.githubusercontent.com/lriki/LN_AdvancedMapPuzzleSystem/master/js/plugins/LN_AdvancedMapPuzzleSystem.js) |
 
 
 ----------
@@ -213,7 +213,7 @@ RPG ツクール MV で新規プロジェクトを作成し、[:arrow_down: こ�
 |------|------|------|------|
 | box | - | - | - |
 | height | 整数値 | 1 | オブジェクトの高さをタイル単位で指定します。1以上にしてください。 |
-| fallable | bool 値 | false | ![ToDo](http://img.shields.io/badge/status-ToDo-red.svg?style=flat) true を指定すると、崖際などから落下できるようになります。 |
+| fallable | bool 値 | false | true を指定すると、崖際などから落下できるようになります。 |
 
 
 注釈の例：
@@ -231,6 +231,8 @@ RPG ツクール MV で新規プロジェクトを作成し、[:arrow_down: こ�
 エッジタイルの通行不可能方向に隣接している箱オブジェクトへ歩行移動で乗ることができます。
 
 ![](docs/img/9.gif)
+
+:warning: 何かが乗っている箱オブジェクトのイベントページが切り替わった場合、乗っているキャラクターは箱オブジェクトの位置へ落下します。
 
 
 ### 箱オブジェクトにジャンプで乗る
@@ -270,8 +272,6 @@ RPG ツクール MV で新規プロジェクトを作成し、[:arrow_down: こ�
 
 ### 箱オブジェクトの落下
 
-![ToDo](http://img.shields.io/badge/status-ToDo-red.svg?style=flat)
-
 エッジタイルの通行禁止方向に押して移動させたとき、落下することができます。
 
 ![](docs/img/15.gif)
@@ -286,8 +286,6 @@ RPG ツクール MV で新規プロジェクトを作成し、[:arrow_down: こ�
 
 
 ### 箱オブジェクトの積み重ね
-
-![ToDo](http://img.shields.io/badge/status-ToDo-red.svg?style=flat)
 
 落下中の箱オブジェクトは、下方向に別の箱オブジェクトがある場合、その上に乗ります。
 
@@ -304,10 +302,13 @@ RPG ツクール MV で新規プロジェクトを作成し、[:arrow_down: こ�
 
 
 
-### プレイヤーの乗降によるイベントの起動
+### キャラクターの乗降によるイベントの起動
 
-![ToDo](http://img.shields.io/badge/status-ToDo-red.svg?style=flat)
+パラメータとして `trigger:onRideOnEvent` を指定すると、キャラクターが上に乗った時にイベントを起動します。
 
+![](docs/img/19.gif)
+
+なお、`trigger` が指定されている場合、通常の "トリガー" によるイベント実行は行われません。
 
 ## マップオブジェクト - スイッチ
 
