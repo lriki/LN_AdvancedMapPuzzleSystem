@@ -1,5 +1,13 @@
 
-//declare global {
+
+
+import { assert, MovingMode } from './Common'
+
+declare global {
+    class Sanshiro {
+        static AnalogMove: any;
+    }
+
     interface Game_CharacterBase {
         _mover: any;
         _moveDefault: boolean;
@@ -14,8 +22,10 @@
 
         _shouleMoveDefaultOverride: boolean;
     }
-//}
+}
 
+
+if (typeof Sanshiro !== 'undefined' && Sanshiro.AnalogMove != undefined) {
 
 
 var _Game_CharacterBase_initMembers = Game_CharacterBase.prototype.initMembers;
@@ -101,14 +111,22 @@ Game_CharacterBase.prototype.updateJump = function() {
 // SAN_AnalogMove.js の isMoving はジャンプ中を考慮していないため、そのままだと キー押し中に moveStraight を毎フレーム呼んでしまう。
 var _Game_Player_isMoving = Game_Player.prototype.isMoving;
 Game_Player.prototype.isMoving = function() {
+    if (!Game_Character.prototype.isMoving.call(this)) return false;
+
     var r = _Game_Player_isMoving.call(this);
     return r || this.isJumping();
 }
 
 var _Game_Player_shouleMoveDefault = Game_Player.prototype.shouleMoveDefault;
 Game_Player.prototype.shouleMoveDefault = function() {
+    // 何かに乗っているときは AMPS の移動処理を行う
     if (this.isRidding()) return true;
+
+    // オブジェクトを押しているときは AMPS の移動処理を行う
     if (this._movingSequel != undefined) return true;
+
+    // Object -> Ground 移動時に、必ず1タイル分移動が終わってから、analogMoving できるようにする
+    if (this._movingMode != MovingMode.Stopping) return true;
 
 
     return _Game_Player_shouleMoveDefault.call(this);// && this._shouleMoveDefaultOverride;
@@ -124,3 +142,4 @@ Game_Player.prototype.updateMove = function() {
     }
 };
 
+}
