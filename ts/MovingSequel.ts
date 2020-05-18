@@ -106,6 +106,10 @@ export class MovingSequel_PushMoving extends MovingSequel {
 
             if (!character.isRidding()) {
                 // 自分も乗っていなければ押せる
+
+                if (MovingHelper.checkFacingOutsideOnEdgeTile(character._x, character._y, d)) {
+                    return false;
+                }
             }
             else if (MovingHelper.checkFacingOutsideOnEdgeTile(target._x, target._y, character.reverseDir(d))) {
                 // 自分は別のオブジェクトに乗っているが、押せそうなオブジェクトが崖際にいる場合は押せる
