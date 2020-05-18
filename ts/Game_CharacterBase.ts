@@ -57,7 +57,7 @@ declare global {
         _fallingOriginalSpeed: number;
         _fallingOriginalThrough: boolean;
         
-        _movingSequel: MovingSequel | undefined;
+        _movingSequel: MovingSequel | undefined;    // source 側が持つ
         _movingSequelOwnerCharacterId: number;
         
         _getonoffFrameMax: number;      // オブジェクト乗降時の移動モーションが不自然に見えないように補間したりするパラメータ

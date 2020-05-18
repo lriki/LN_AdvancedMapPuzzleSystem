@@ -10,3 +10,5 @@ import './Game_Map';
 import './Game_Interpreter';
 import './Spriteset_Map';
 import './Scene_Boot';
+
+import './SAN_AnalogMove_Integration';

@@ -60,10 +60,14 @@ export class MovingSequel {
  */
 export class MovingSequel_PushMoving extends MovingSequel {
     _ownerOrignalMovingSpeed: number;   // 押し移動前の移動速度を保存して、終わったら復元するのに使う
+    _ownerStepEnded: boolean;           // SAN_AnalogMove.js 対策
+    _targetStepEnded: boolean;          // SAN_AnalogMove.js 対策
 
     constructor() {
         super();
         this._ownerOrignalMovingSpeed = 0;
+        this._ownerStepEnded = false;
+        this._targetStepEnded = false;
     }
 
     static checkPushable(obj: Game_CharacterBase) {
@@ -178,15 +182,24 @@ export class MovingSequel_PushMoving extends MovingSequel {
 
     onOwnerStepEnding(ownerCharacter: Game_CharacterBase) {
         ownerCharacter.setMoveSpeed(this._ownerOrignalMovingSpeed);
+        this._ownerStepEnded = true;
+        this.tryDetach();
     };
 
     onTargetStepEnding(targetCharacter: Game_CharacterBase) {
+        
+        this._targetStepEnded = true;
         if (!targetCharacter.isFalling()) {
-            //this.ownerCharacter()._forcePositionAdjustment = false;
-            this.detach();
+            this.tryDetach();
         }
         
     };
+
+    tryDetach() {
+        if (this._ownerStepEnded && this._targetStepEnded) {
+            this.detach();
+        }
+    }
 }
 
 
