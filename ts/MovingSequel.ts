@@ -104,10 +104,22 @@ export class MovingSequel_PushMoving extends MovingSequel {
         else {
             // オブジェクトは別のオブジェクトに乗っていない
 
+            let selfOnEdge = MovingHelper.checkFacingOutsideOnEdgeTile(character._x, character._y, d);
+            let targetOnEdge = MovingHelper.checkFacingOutsideOnEdgeTile(target._x, target._y, character.reverseDir(d));
+
             if (!character.isRidding()) {
-                // 自分も乗っていなければ押せる
+                // 自分も乗っていない
+
+                if (selfOnEdge || targetOnEdge) {
+                    // どちらかが、Push 方向に対して侵入不可能な Edge 上にいる場合は押せない
+                    // (崖上、または崖下から押せないようにする)
+                    return false;
+                }
+                else {
+                    // 押せる
+                }
             }
-            else if (MovingHelper.checkFacingOutsideOnEdgeTile(target._x, target._y, character.reverseDir(d))) {
+            else if (targetOnEdge) {
                 // 自分は別のオブジェクトに乗っているが、押せそうなオブジェクトが崖際にいる場合は押せる
             }
             else {
