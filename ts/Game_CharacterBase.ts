@@ -868,6 +868,11 @@ Game_CharacterBase.prototype.onStepEnd = function() {
         }
     }
 
+    if (!this.isRidding()) {
+        // 乗降時の微調整パラメータをリセット
+        this._ridingScreenZPriority = -1;
+    }
+
     // 何かに乗っていたら通知
     var riddingObject = this.riddingObject();
     if (riddingObject) {
