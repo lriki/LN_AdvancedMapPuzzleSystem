@@ -1,13 +1,15 @@
 /// <reference types="rpgmakermv_typescript_dts"/>
-import { paramMapSkillEffectsMapId, paramGuideLineTerrainTag } from './PluginParameters'
+import { paramMapSkillEffectsMapId, paramGuideLineTerrainTag, paramAllowAllMapPuzzles } from './PluginParameters'
 import { AMPSManager } from './AMPSManager'
 import { assert } from './Common';
 
 declare global {
     interface Game_Map {
+        _puzzleEnabled: boolean;
         _spawnMapSkillEffectEventcallback: (event: Game_Event) => void;
         _despawnMapSkillEffectEventcallback: (event: Game_Event) => void;
 
+        isPuzzleEnabled(): boolean;
         checkNotPassageAll(x: number, y: number): boolean;
         checkGroove(x: number, y: number): boolean;
         spawnMapSkillEffectEvent(name: string): Game_Event | undefined;
@@ -15,6 +17,28 @@ declare global {
         setSpawnMapSkillEffectEventHandler(callback: (event: Game_Event) => void): void;
         setDespawnMapSkillEffectEventHandler(callback: (event: Game_Event) => void): void;
     }
+}
+
+var _Game_Map_setup = Game_Map.prototype.setup;
+Game_Map.prototype.setup = function(mapId) {
+    _Game_Map_setup.call(this, mapId);
+
+    if ($dataMap.meta.LNPuzzleEnable) {
+        this._puzzleEnabled = true;
+    }
+    else if (this.isOverworld()) {
+        this._puzzleEnabled = false;
+    }
+    else if (paramAllowAllMapPuzzles) {
+        this._puzzleEnabled = true;
+    }
+    else {
+        this._puzzleEnabled = false;
+    }
+}
+
+Game_Map.prototype.isPuzzleEnabled = function(): boolean {
+    return this._puzzleEnabled;
 }
 
 // fully override

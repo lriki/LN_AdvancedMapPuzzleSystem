@@ -9,3 +9,10 @@ export var paramGuideLineTerrainTag = Number(PluginManager.parameters(pluginName
 
 // オブジェクトの落下速度
 export var paramFallingSpeed = 5;
+
+export var paramAllowAllMapPuzzles: boolean = true;
+
+var localAllowAllMapPuzzles = PluginManager.parameters(pluginName)["AllowAllMapPuzzles"];
+if (localAllowAllMapPuzzles) {
+    paramAllowAllMapPuzzles = Boolean(localAllowAllMapPuzzles);
+}

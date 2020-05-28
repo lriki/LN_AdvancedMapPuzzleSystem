@@ -142,18 +142,23 @@ Game_CharacterBase.prototype.initMembers = function() {
 // Note: どういうわけか Follower は非表示でも moveStraight が呼ばれてくる。
 var _Game_CharacterBase_moveStraight = Game_CharacterBase.prototype.moveStraight;
 Game_CharacterBase.prototype.moveStraight = function (d: number) {
-    assert(d == 2 || d == 4 || d == 6 || d == 8);
+    if ($gameMap.isPuzzleEnabled()) {
+        assert(d == 2 || d == 4 || d == 6 || d == 8);
+        
+        if (this._waitAfterJump > 0) {
+            this._waitAfterJump--;
+            return;
+        }
     
-    if (this._waitAfterJump > 0) {
-        this._waitAfterJump--;
-        return;
+        if (MovingSequel_PushMoving.tryStartPushObjectAndMove(this, d)) {
+            return;
+        }
+    
+        this.moveStraightMain(d);
     }
-
-    if (MovingSequel_PushMoving.tryStartPushObjectAndMove(this, d)) {
-        return;
+    else {
+        _Game_CharacterBase_moveStraight.call(this, d);
     }
-
-    this.moveStraightMain(d);
 };
 
 /**

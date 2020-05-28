@@ -10,7 +10,7 @@
 //=============================================================================
 
 /*:ja
- * @plugindesc 謎解きマップシステムプラグイン v0.4.2
+ * @plugindesc 謎解きマップシステムプラグイン v0.4.3
  * @author lriki
  * @param MapSkillEffectsMapId
  * @desc TODO
@@ -24,6 +24,11 @@
  *
  * @help マップ上のキャラクター移動やイベントシステムを拡張し、
  * 謎解きの幅を広げるための様々な機能を追加します。
+ * 
+ * @param AllowAllMapPuzzles
+ * @desc エリアタイプのすべてのマップで、謎解きシステムを有効にするかどうかを設定します。 false にした場合、規定ではすべてのマップで無効となり、マップのメモ欄に <LNPuzzleEnable> と記入したマップだけ有効になります。
+ * @default true
+ * @type boolean
  * 
  * MIT License
  */
