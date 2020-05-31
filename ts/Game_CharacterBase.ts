@@ -15,21 +15,13 @@
  * 
  */
 
-import { assert } from './Common'
+import { assert, MovingMode } from './Common'
 import { MovingHelper } from './MovingHelper'
 import { AMPS_SoundManager } from "./SoundManager";
 import { MovingSequel, MovingSequel_PushMoving } from "./MovingSequel";
 import { paramGuideLineTerrainTag, paramFallingSpeed } from './PluginParameters';
 
 const JUMP_WAIT_COUNT   = 10;
-
-enum MovingMode {
-    Stopping,
-    GroundToGround,
-    GroundToObject,
-    ObjectToObject,
-    ObjectToGround,
-}
 
 enum FallingState {
     None,
@@ -57,7 +49,7 @@ declare global {
         _fallingOriginalSpeed: number;
         _fallingOriginalThrough: boolean;
         
-        _movingSequel: MovingSequel | undefined;
+        _movingSequel: MovingSequel | undefined;    // source 側が持つ
         _movingSequelOwnerCharacterId: number;
         
         _getonoffFrameMax: number;      // オブジェクト乗降時の移動モーションが不自然に見えないように補間したりするパラメータ
@@ -576,8 +568,10 @@ Game_CharacterBase.prototype.unrideFromObject = function() {
 Game_CharacterBase.prototype.moveToDir = function(d: number, withAjust: boolean) {
     this._x = $gameMap.roundXWithDirection(this._x, d);
     this._y = $gameMap.roundYWithDirection(this._y, d);
-    this._realX = $gameMap.xWithDirection(this._x, this.reverseDir(d));
-    this._realY = $gameMap.yWithDirection(this._y, this.reverseDir(d));
+    //this._realX = $gameMap.xWithDirection(this._x, this.reverseDir(d));
+    //this._realY = $gameMap.yWithDirection(this._y, this.reverseDir(d));
+    
+    //console.log("moveto:", this._realX);
 
     //var y = this._y;
     if (withAjust || this._forcePositionAdjustment) {
@@ -713,7 +707,7 @@ Game_CharacterBase.prototype.updateMove = function() {
 
     if (this.isMoving() &&
         this._movingMode != MovingMode.Stopping &&
-        this._movingMode != MovingMode.GroundToGround) {
+        (this._movingMode != MovingMode.GroundToGround)) {
         this._getonoffFrameCount++;
         var tx = 0;
         var ty = 0;
@@ -734,6 +728,7 @@ Game_CharacterBase.prototype.updateMove = function() {
         var t = Math.min(this._getonoffFrameCount / this._getonoffFrameMax, 1.0);
         this._realX = MovingHelper.linear(t, this._getonoffStartX, tx - this._getonoffStartX, 1.0);
         this._realY = MovingHelper.linear(t, this._getonoffStartY, ty - this._getonoffStartY, 1.0);
+
 
         // ここで論理座標も同期しておかないと、完了時の一瞬だけ画面が揺れる
         // this._x = obj._x;

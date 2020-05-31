@@ -27,3 +27,12 @@ export function strToEventTrigger(str: string): EventTrigger {
     else
         return EventTrigger.None;
 }
+
+
+export enum MovingMode {
+    Stopping,
+    GroundToGround,
+    GroundToObject,
+    ObjectToObject,
+    ObjectToGround,
+}

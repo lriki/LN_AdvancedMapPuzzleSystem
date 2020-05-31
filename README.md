@@ -13,7 +13,7 @@ English document in process: [English page](README.en_US.md)
 
 | Version | File |
 |---------|------|
-| v0.4.3  | [:arrow_down: LN_AdvancedMapPuzzleSystem.js](https://raw.githubusercontent.com/lriki/LN_AdvancedMapPuzzleSystem/master/js/plugins/LN_AdvancedMapPuzzleSystem.js) |
+| v0.4.4  | [:arrow_down: LN_AdvancedMapPuzzleSystem.js](https://raw.githubusercontent.com/lriki/LN_AdvancedMapPuzzleSystem/master/js/plugins/LN_AdvancedMapPuzzleSystem.js) |
 
 
 ----------
@@ -389,11 +389,16 @@ RPG ツクール MV で新規プロジェクトを作成し、[:arrow_down: こ�
 ![ToDo](http://img.shields.io/badge/status-ToDo-red.svg?style=flat)
 
 
+## 他プラグインとの競合情報
+- triacontane 様の HalfMove.js と併用する場合は、本プラグインをリストの下に追加してください。
+- サンシロ 様の SAN_AnalogMove.js と併用する場合は、本プラグインをリストの下に追加してください。
+
 ## ライセンス情報
 
 本プラグインはMITライセンスのもとで公開しています。
 
 [The MIT License (MIT)](https://opensource.org/licenses/mit-license.php)
 
-また、テストプロジェクトには動作確認のため @triacontane 様の [HalfMove.js](https://github.com/triacontane/RPGMakerMV/blob/master/HalfMove.js) が含まれています。
-
+また、テストプロジェクトには動作確認のため以下のプラグインが含まれています。
+- [HalfMove.js](https://github.com/triacontane/RPGMakerMV/blob/master/HalfMove.js) が含まれています。
+- [SAN_AnalogMove.js](https://github.com/rev2nym/SAN_AnalogMove)
