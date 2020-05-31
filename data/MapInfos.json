@@ -1,7 +1,7 @@
 [
 null,
 {"id":1,"expanded":true,"name":"AMPS-Effects","order":16,"parentId":0,"scrollX":819,"scrollY":461},
-{"id":2,"expanded":false,"name":"Sample","order":2,"parentId":0,"scrollX":819,"scrollY":460.5},
+{"id":2,"expanded":true,"name":"Sample","order":2,"parentId":0,"scrollX":819,"scrollY":461},
 {"id":3,"expanded":true,"name":"Test-基本移動","order":9,"parentId":0,"scrollX":819,"scrollY":461},
 {"id":4,"expanded":false,"name":"Test-ジャンプ（ホール）","order":10,"parentId":3,"scrollX":819,"scrollY":461},
 {"id":5,"expanded":false,"name":"Test-ジャンプ（エッジ）","order":11,"parentId":3,"scrollX":811,"scrollY":461},
@@ -17,7 +17,7 @@ null,
 {"id":15,"expanded":false,"name":"Sample3","order":5,"parentId":2,"scrollX":832,"scrollY":640},
 {"id":16,"expanded":false,"name":"Sample4","order":6,"parentId":2,"scrollX":832,"scrollY":640},
 {"id":17,"expanded":false,"name":"Issues","order":17,"parentId":0,"scrollX":819,"scrollY":461},
-{"id":18,"expanded":false,"name":"Box-Falling","order":15,"parentId":7,"scrollX":819,"scrollY":460.5},
+{"id":18,"expanded":false,"name":"Box-Falling","order":15,"parentId":7,"scrollX":819,"scrollY":461},
 {"id":19,"expanded":false,"name":"Sample5","order":7,"parentId":2,"scrollX":819,"scrollY":461},
 {"id":20,"expanded":true,"name":"Test-設定","order":20,"parentId":0,"scrollX":819,"scrollY":461},
 {"id":21,"expanded":false,"name":"ワールドマップ","order":21,"parentId":20,"scrollX":819,"scrollY":461}

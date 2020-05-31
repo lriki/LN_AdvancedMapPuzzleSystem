@@ -18,9 +18,6 @@ declare global {
         shouleMoveDefault(): boolean;
         updateMover(): void;
 
-        //----------
-
-        _shouleMoveDefaultOverride: boolean;
     }
 }
 
@@ -31,7 +28,6 @@ if (typeof Sanshiro !== 'undefined' && Sanshiro.AnalogMove != undefined) {
 var _Game_CharacterBase_initMembers = Game_CharacterBase.prototype.initMembers;
 Game_CharacterBase.prototype.initMembers = function() {
     _Game_CharacterBase_initMembers.call(this);
-    this._shouleMoveDefaultOverride = false;
 }
 
 /*
@@ -64,47 +60,33 @@ Game_CharacterBase.prototype.updateMover = function() {
 
     _Game_CharacterBase_updateMover.call(this);
 
-    if (this._mover.isInputed && this._mover.isInputed() && this.canAnalogMove()) {
-
-
-        if (Input.dir8 == 6 && Math.abs(this._mover._lasPosVec.x() - this._mover._posVec.x()) < thr) {
-            this.moveStraight(6);
+    if ($gameMap.isPuzzleEnabled()) {
+        if (this._mover.isInputed && this._mover.isInputed() && this.canAnalogMove()) {
+            if (Input.dir8 == 6 && Math.abs(this._mover._lasPosVec.x() - this._mover._posVec.x()) < thr) {
+                this.moveStraight(6);
+            }
+            if (Input.dir8 == 4 && Math.abs(this._mover._lasPosVec.x() - this._mover._posVec.x()) < thr) {
+                this.moveStraight(4);
+            }
+            if (Input.dir8 == 8 && Math.abs(this._mover._lasPosVec.y() - this._mover._posVec.y()) < thr) {
+                this.moveStraight(8);
+            }
+            if (Input.dir8 == 2 && Math.abs(this._mover._lasPosVec.y() - this._mover._posVec.y()) < thr) {
+                this.moveStraight(2);
+            }
         }
-        if (Input.dir8 == 4 && Math.abs(this._mover._lasPosVec.x() - this._mover._posVec.x()) < thr) {
-            this.moveStraight(4);
-        }
-        if (Input.dir8 == 8 && Math.abs(this._mover._lasPosVec.y() - this._mover._posVec.y()) < thr) {
-            this.moveStraight(8);
-        }
-        if (Input.dir8 == 2 && Math.abs(this._mover._lasPosVec.y() - this._mover._posVec.y()) < thr) {
-            this.moveStraight(2);
-        }
-       /*
-       console.log(Math.abs(this._mover._lasPosVec.y() - this._mover._posVec.y()));
-        if (Input.dir8 == 6 && this._mover._lasPosVec.x() == this._mover._posVec.x()) {
-            this.moveStraight(6);
-        }
-        if (Input.dir8 == 4 && this._mover._lasPosVec.x() == this._mover._posVec.x()) {
-            this.moveStraight(4);
-        }
-
-        if (Input.dir8 == 8 && this._mover._lasPosVec.y() == this._mover._posVec.y()) {
-            this.moveStraight(8);
-        }
-        if (Input.dir8 == 2 && this._mover._lasPosVec.y() == this._mover._posVec.y()) {
-            this.moveStraight(2);
-        }
-        */
     }
-};
 
+};
 
 var _Game_CharacterBase_updateJump = Game_CharacterBase.prototype.updateJump;
 Game_CharacterBase.prototype.updateJump = function() {
     _Game_CharacterBase_updateJump.call(this);
 
-    if (!this.isJumping() && this.hasMover()) {
-        this.refreshMover();
+    if ($gameMap.isPuzzleEnabled()) {
+        if (!this.isJumping() && this.hasMover()) {
+            this.refreshMover();
+        }
     }
 }
 
@@ -117,6 +99,11 @@ Game_Player.prototype.isMoving = function() {
     return r || this.isJumping();
 }
 
+/**
+ * SAN_AnalogMove.js でデフォルト移動をするか (アナログ移動をしないか)
+ * 
+ * 元の条件に対して、AMPS 用の移動制限を追加する。
+ */
 var _Game_Player_shouleMoveDefault = Game_Player.prototype.shouleMoveDefault;
 Game_Player.prototype.shouleMoveDefault = function() {
     // 何かに乗っているときは AMPS の移動処理を行う
@@ -128,14 +115,16 @@ Game_Player.prototype.shouleMoveDefault = function() {
     // Object -> Ground 移動時に、必ず1タイル分移動が終わってから、analogMoving できるようにする
     if (this._movingMode != MovingMode.Stopping) return true;
 
-
-    return _Game_Player_shouleMoveDefault.call(this);// && this._shouleMoveDefaultOverride;
-
+    return _Game_Player_shouleMoveDefault.call(this);
 };
 
-var _Game_Player_updateMove = Game_Player.prototype.updateMove;
+/**
+ * SAN_AnalogMove.js で定義されている Game_Player.updateMove の BaseCall を変更する。
+ * 
+ * SAN_AnalogMove.js がキャプチャしている _Game_Player_updateMove はツクールオリジナルのものであり、
+ * それを呼んでも、APMS がオーバーライドした Game_CharacterBase.updateMove は呼ばれない。
+ */
 Game_Player.prototype.updateMove = function() {
-    //this._shouleMoveDefaultOverride = true;
     if (this.shouleMoveDefault()) {
         Game_Character.prototype.updateMove.call(this);
         this._moveDefault = this.isMoving();
