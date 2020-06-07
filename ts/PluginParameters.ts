@@ -16,3 +16,8 @@ var localAllowAllMapPuzzles = PluginManager.parameters(pluginName)['AllowAllMapP
 if (localAllowAllMapPuzzles != undefined) {
     paramAllowAllMapPuzzles = (localAllowAllMapPuzzles.toLowerCase() === 'true');
 }
+
+
+export var paramSlipRegion = 1;
+
+export var paramSlippingAnimationPattern = 2;

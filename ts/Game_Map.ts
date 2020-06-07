@@ -1,5 +1,5 @@
 /// <reference types="rpgmakermv_typescript_dts"/>
-import { paramMapSkillEffectsMapId, paramGuideLineTerrainTag, paramAllowAllMapPuzzles } from './PluginParameters'
+import { paramMapSkillEffectsMapId, paramGuideLineTerrainTag, paramAllowAllMapPuzzles, paramSlipRegion } from './PluginParameters'
 import { AMPSManager } from './AMPSManager'
 import { assert } from './Common';
 
@@ -16,6 +16,7 @@ declare global {
         despawnMapSkillEffectEvent(event: Game_Event): void;
         setSpawnMapSkillEffectEventHandler(callback: (event: Game_Event) => void): void;
         setDespawnMapSkillEffectEventHandler(callback: (event: Game_Event) => void): void;
+        isSlipperyTile(x: number, y: number): boolean;
     }
 }
 
@@ -142,5 +143,12 @@ Game_Map.prototype.setSpawnMapSkillEffectEventHandler = function(callback: (even
 
 Game_Map.prototype.setDespawnMapSkillEffectEventHandler = function(callback: (event: Game_Event) => void): void {
     this._despawnMapSkillEffectEventcallback = callback;
+}
+
+/**
+ * 滑りタイルかどうか
+ */
+Game_Map.prototype.isSlipperyTile = function(x: number, y: number): boolean {
+    return (paramSlipRegion !== 0 && this.regionId(x, y) === paramSlipRegion);
 }
 

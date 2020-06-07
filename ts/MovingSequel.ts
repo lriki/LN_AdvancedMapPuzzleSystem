@@ -138,14 +138,27 @@ export class MovingSequel_PushMoving extends MovingSequel {
             
             behavior._ownerOrignalMovingSpeed = character.moveSpeed();
             character.setMoveSpeed(target.moveSpeed());
-            
-            character._forcePositionAdjustment = true;
-            character.moveStraightMain(d);  // TODO: _forcePositionAdjustment 引数で渡していい気がする
-            character._forcePositionAdjustment = false;
-            if (character.isMovementSucceeded(character.x, character.y)) {
+
+            if (target.isOnSlipperyTile()) {
+                // 滑る床の上にあるオブジェクトを押した場合、Box 側だけの移動とする。
+                // 押す側は attachMovingSequel() するだけでおしまい。
                 behavior.attachMovingSequel(character, target);
+
+                // 押す側の移動処理は終わったことにして、Box の移動終了とともに detach できるようにする
+                behavior.onOwnerStepEnding(character);
+
                 return true;
             }
+            else {
+                character._forcePositionAdjustment = true;
+                character.moveStraightMain(d);  // TODO: _forcePositionAdjustment 引数で渡していい気がする
+                character._forcePositionAdjustment = false;
+                if (character.isMovementSucceeded(character.x, character.y)) {
+                    behavior.attachMovingSequel(character, target);
+                    return true;
+                }
+            }
+            
         }
 
         

@@ -27,7 +27,11 @@ Game_Player.prototype.canMove = function(): boolean {
 var _Game_Player_isDashing = Game_Player.prototype.isDashing;
 Game_Player.prototype.isDashing = function(): boolean {
     if (this._movingSequel) {
-        // 移動制御中のタッチ移動や接触イベント起動を禁止
+        // 移動制御中は禁止
+        return false;
+    }
+    if (this.isOnSlipperyTile()) {
+        // 滑る床上は禁止
         return false;
     }
     return _Game_Player_isDashing.call(this);

@@ -19,7 +19,7 @@ import { assert, MovingMode } from './Common'
 import { MovingHelper } from './MovingHelper'
 import { AMPS_SoundManager } from "./SoundManager";
 import { MovingSequel, MovingSequel_PushMoving } from "./MovingSequel";
-import { paramGuideLineTerrainTag, paramFallingSpeed } from './PluginParameters';
+import { paramGuideLineTerrainTag, paramFallingSpeed, paramSlippingAnimationPattern } from './PluginParameters';
 
 const JUMP_WAIT_COUNT   = 10;
 
@@ -42,6 +42,7 @@ declare global {
         _extraJumping: boolean;     // AMPS によるジャンプかどうか。見た目上の問題を修正するため微調整を入れたりする。
         _ridingScreenZPriority: number;
         _movingMode: MovingMode;
+        _movingDirection: number;   // 自動移動の際の移動方向。滑りタイル状で向き固定のまま移動したりする。
         _forcePositionAdjustment: boolean;  // moveToDir 移動時、移動先位置を強制的に round するかどうか（半歩移動の封印）
 
         _moveToFalling: boolean;    // 現在の移動ステップが終わったら落下する
@@ -71,6 +72,7 @@ declare global {
         isFallable(): boolean;
         isFalling(): boolean;
         checkPassRide(x: number, y: number): boolean;
+        isOnSlipperyTile(): boolean;
 
         moveStraightMain(d: number): void;
         attemptMoveGroundToGround(d: number): boolean;
@@ -89,9 +91,14 @@ declare global {
         jumpToDir(d: number, len: number, toObj: boolean, extraJumping: boolean): void;
         startFall(): void;
         updateFall(): void;
+        updateSlippery(): void;
         resetGetOnOffParams(): void;
 
+        raiseStepEnd(): void;
+        raiseStop(): void;
+
         onStepEnd(): void;
+        onStop(): void;
         onJumpEnd(): void;
         onRideOnEvent(): void;
         onStartFalling(): void;
@@ -112,6 +119,7 @@ Game_CharacterBase.prototype.initMembers = function() {
     this._extraJumping = false;
     this._ridingScreenZPriority = -1;
     this._movingMode = MovingMode.Stopping;
+    this._movingDirection = 0;
     this._forcePositionAdjustment = false;
 
     this._moveToFalling = false;
@@ -266,6 +274,24 @@ Game_CharacterBase.prototype.riddingObject = function(): Game_CharacterBase | un
  */
 Game_CharacterBase.prototype.isFalling = function(): boolean {
     return this._fallingState != FallingState.None;
+}
+
+/**
+ * 滑る床の上にいるか？
+ */
+Game_CharacterBase.prototype.isOnSlipperyTile = function(): boolean {
+    return $gameMap.isSlipperyTile(this._x, this._y);
+};
+
+/**
+ * 滑っているときのアニメーションパターン
+ */
+var _Game_CharacterBase_pattern = Game_CharacterBase.prototype.pattern;
+Game_CharacterBase.prototype.pattern = function() {
+    if (this.isOnSlipperyTile()) {
+        return paramSlippingAnimationPattern;
+    }
+    return _Game_CharacterBase_pattern.call(this);
 };
 
 var _Game_CharacterBase_screenZ = Game_CharacterBase.prototype.screenZ;
@@ -293,6 +319,7 @@ Game_CharacterBase.prototype.screenZ = function() {
  * （他オブジェクトと関係して動くものは MovingSequel で定義する）
  */
 Game_CharacterBase.prototype.moveStraightMain = function(d: number) {
+
 
     this.setMovementSuccess(false);
 
@@ -322,7 +349,6 @@ Game_CharacterBase.prototype.moveStraightMain = function(d: number) {
         
         this.setDirection(d);
     }
-
 };
 
 /**
@@ -336,6 +362,7 @@ Game_CharacterBase.prototype.attemptMoveGroundToGround = function(d: number): bo
         if ($gameMap.terrainTag(dx, dy) == paramGuideLineTerrainTag && this.isMapPassable(this._x, this._y, d)) {
             _Game_CharacterBase_moveStraight.call(this, d);
             if (this.isMovementSucceeded(this.x, this.y)) {
+                this._movingDirection = d;
                 return true;
             }
         }
@@ -348,6 +375,7 @@ Game_CharacterBase.prototype.attemptMoveGroundToGround = function(d: number): bo
             {
                 this.moveToDir(d, false);
                 this.setMovementSuccess(true);
+                this._movingDirection = d;
                 this._moveToFalling = true; // 1歩移動後、落下
                 return true;
             }
@@ -361,6 +389,7 @@ Game_CharacterBase.prototype.attemptMoveGroundToGround = function(d: number): bo
         _Game_CharacterBase_moveStraight.call(this, d);
         
         if (this._movementSuccess) {
+            this._movingDirection = d;
             if (this._forcePositionAdjustment) {
                 // Ground to Ground 移動で、オブジェクトを押すときなどの位置合わせ
                 this._x = Math.round(MovingHelper.roundXWithDirection(oldX, d));
@@ -381,6 +410,7 @@ Game_CharacterBase.prototype.attemptMoveGroundToGround = function(d: number): bo
 Game_CharacterBase.prototype.attemptJumpGroundToGround = function(d): boolean {
     if (MovingHelper.canPassJumpGroundToGround(this, this._x, this._y, d)) {
         this.setMovementSuccess(true);
+        this._movingDirection = d;
         this.jumpToDir(d, 2, false, true);
         this._movingMode = MovingMode.GroundToGround;
         return true;
@@ -394,6 +424,7 @@ Game_CharacterBase.prototype.attemptJumpGroundToGround = function(d): boolean {
 Game_CharacterBase.prototype.attemptJumpGroove = function(d: number): boolean {
     if (MovingHelper.canPassJumpGroove(this, this._x, this._y, d)) {
         this.setMovementSuccess(true);
+        this._movingDirection = d;
         this.jumpToDir(d, 2, false, false);
         this._movingMode = MovingMode.GroundToGround;
         return true;
@@ -409,6 +440,7 @@ Game_CharacterBase.prototype.attemptMoveGroundToObject = function(d: number, ign
     var obj = MovingHelper.checkMoveOrJumpGroundToObject(this._x, this._y, d, 1, ignoreMapPassable);
     if (obj && obj != this) {   // 高さ1のオブジェクトを上に移動しようとしたときにできない場合は this を返すので、ここではじく
         this.setMovementSuccess(true);
+        this._movingDirection = d;
         this.resetGetOnOffParams();
         this.moveToDir(d, true);
         this.rideToObject(obj);
@@ -425,6 +457,7 @@ Game_CharacterBase.prototype.attemptJumpGroundToObject = function(d: number): bo
     var obj = MovingHelper.checkMoveOrJumpGroundToObject(this._x, this._y, d, 2, false);
     if (obj && obj != this) {   // 高さ1のオブジェクトを上に移動しようとしたときにできない場合は this を返すので、ここではじく
         this.setMovementSuccess(true);
+        this._movingDirection = d;
         // 乗る
         this.resetGetOnOffParams();
         this.jumpToDir(d, 2, true, true);
@@ -442,6 +475,7 @@ Game_CharacterBase.prototype.attemptMoveObjectToGround = function(d: number): bo
     assert(this.isRidding());
     if (MovingHelper.checkMoveOrJumpObjectToGround(this, this._x, this._y, d, 1)) {
         this.setMovementSuccess(true);
+        this._movingDirection = d;
         this.resetGetOnOffParams();
         this.moveToDir(d, false);
         this.unrideFromObject();
@@ -453,6 +487,7 @@ Game_CharacterBase.prototype.attemptMoveObjectToGround = function(d: number): bo
         if (this.isBoxType() && this.isFallable()) {
             if (!MovingHelper.checkFacingOtherEdgeTile(this._x, this._y, d, 1)) {
                 this.setMovementSuccess(true);
+                this._movingDirection = d;
                 this.resetGetOnOffParams();
                 this.moveToDir(d, false);
                 this.unrideFromObject();
@@ -472,6 +507,7 @@ Game_CharacterBase.prototype.attemptMoveObjectToObject = function(d: number): bo
     var obj = MovingHelper.checkMoveOrJumpObjectToObject(this._x, this._y, d, 1);
     if (obj && obj != this) {
         this.setMovementSuccess(true);
+        this._movingDirection = d;
         this.resetGetOnOffParams();
         this.moveToDir(d, false);
         this.unrideFromObject();
@@ -488,6 +524,7 @@ Game_CharacterBase.prototype.attemptMoveObjectToObject = function(d: number): bo
 Game_CharacterBase.prototype.attemptJumpObjectToGround = function(d: number): boolean {
     if (MovingHelper.checkMoveOrJumpObjectToGround(this, this._x, this._y, d, 2)) {
         this.setMovementSuccess(true);
+        this._movingDirection = d;
         this.jumpToDir(d, 2, false, true);
         //this.unrideFromObject();
         this._movingMode = MovingMode.ObjectToGround;
@@ -503,6 +540,7 @@ Game_CharacterBase.prototype.attemptJumpObjectToObject = function(d: number): bo
     var obj = MovingHelper.checkMoveOrJumpObjectToObject(this._x, this._y, d, 2);
     if (obj) {
         this.setMovementSuccess(true);
+        this._movingDirection = d;
         this.resetGetOnOffParams();
         this.jumpToDir(d, 2, true, true);
         //this.unrideFromObject();
@@ -568,10 +606,6 @@ Game_CharacterBase.prototype.unrideFromObject = function() {
 Game_CharacterBase.prototype.moveToDir = function(d: number, withAjust: boolean) {
     this._x = $gameMap.roundXWithDirection(this._x, d);
     this._y = $gameMap.roundYWithDirection(this._y, d);
-    //this._realX = $gameMap.xWithDirection(this._x, this.reverseDir(d));
-    //this._realY = $gameMap.yWithDirection(this._y, this.reverseDir(d));
-    
-    //console.log("moveto:", this._realX);
 
     //var y = this._y;
     if (withAjust || this._forcePositionAdjustment) {
@@ -638,20 +672,6 @@ Game_CharacterBase.prototype.isMoving = function() {
     }
 }
 
-/*
-var _Game_CharacterBase_isNormalPriority = Game_CharacterBase.prototype.isNormalPriority;
-Game_CharacterBase.prototype.isNormalPriority = function(): boolean {
-    //
-    //
-    if (this.isRidding()) {
-        console.log("isNormalPriority false");
-        return false;
-    }
-    else {
-        return _Game_CharacterBase_isNormalPriority.call(this);
-    }
-};
-*/
 
 var _Game_CharacterBase_update = Game_CharacterBase.prototype.update;
 Game_CharacterBase.prototype.update = function() {
@@ -662,6 +682,9 @@ Game_CharacterBase.prototype.update = function() {
             return;
         }
     }
+
+    //if (this.)
+
     if (this._movingSequelOwnerCharacterId >= 0) {
         let character = MovingHelper.getCharacterById(this._movingSequelOwnerCharacterId);
         if (character._movingSequel) {
@@ -751,7 +774,7 @@ Game_CharacterBase.prototype.updateMove = function() {
             this.startFall();
         }
         else {
-            this.onStepEnd();
+            this.raiseStepEnd();
         }
     }
 };
@@ -811,22 +834,10 @@ Game_CharacterBase.prototype.updateFall = function() {
             if ($gameMap.terrainTag(this._x, this._y) == paramGuideLineTerrainTag) {
                 // ガイドラインのタイルまで進んだら落下終了
                 this._fallingState = FallingState.EpilogueToRide;
-                //this._fallingState = Game_BattlerBase.FAILLING_STATE_NONE;
-                //this.setThrough(this._fallingOriginalThrough);
-                //this.setMoveSpeed(this._fallingOriginalSpeed);
-                //this.onStepEnd();
-                //SoundManager.playGSFalled();
-                //return;
             }
             // 乗れそうなオブジェクトへ地形判定無視で移動してみる
             else if (this.attemptMoveGroundToObject(2, true)) {
                 this._fallingState = FallingState.EpilogueToRide;
-                // オブジェクトに乗るように移動開始できた。
-                // 状態だけ戻して、以降は移動として処理する。
-                //this._falling = false;
-                //this.setThrough(this._fallingOriginalThrough);
-                //this.setMoveSpeed(this._fallingOriginalSpeed);
-                //return;
             }
             else {
                 this.moveStraightMain(2);
@@ -838,7 +849,7 @@ Game_CharacterBase.prototype.updateFall = function() {
             this._fallingState = FallingState.None;
             this.setThrough(this._fallingOriginalThrough);
             this.setMoveSpeed(this._fallingOriginalSpeed);
-            this.onStepEnd();
+            this.raiseStepEnd();
             AMPS_SoundManager.playGSFalled();
         }
     }
@@ -852,12 +863,42 @@ Game_CharacterBase.prototype.resetGetOnOffParams = function() {
 }
 
 //------------------------------------------------------------------------------
+// タイミング発火
+
+Game_CharacterBase.prototype.raiseStepEnd = function() {
+    this.onStepEnd();
+
+    if (this.isOnSlipperyTile()) {
+        $gameTemp.clearDestination();
+        this.moveStraight(this._movingDirection);
+        if (!this.isMovementSucceeded(this.x, this.y)) {
+            // moveStraight の結果、移動できなかったら一連の移動を終了する
+            this.raiseStop();
+        }
+    }
+    else {
+        this.raiseStop();
+    }
+}
+
+Game_CharacterBase.prototype.raiseStop = function() {
+    this.onStop();
+}
+
+//------------------------------------------------------------------------------
 // タイミング通知
 
 /**
  * 1歩歩き終わり、次の移動ができる状態になった
  */
 Game_CharacterBase.prototype.onStepEnd = function() {
+}
+
+/**
+ * 次の移動操作ができる状態になった。
+ * 滑る床は、障害物にぶつかるなどで止まった時に呼ばれる。
+ */
+Game_CharacterBase.prototype.onStop = function() {
     if (this._movingSequel) {
         this._movingSequel.onOwnerStepEnding(this);
     }
