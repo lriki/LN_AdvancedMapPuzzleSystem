@@ -34,7 +34,6 @@ declare global {
         _mapObjectEventTrigger: EventTrigger;
         _mapSkillRange: number;
         _reactionMapSkill: string;  // "reaction:" の値を toLocaleLowerCase したもの。
-        _positionalObject: boolean; // 位置記憶オブジェクトかどうか
 
         clearMapObjectSettings(): void;
         //objectType(): ObjectType;

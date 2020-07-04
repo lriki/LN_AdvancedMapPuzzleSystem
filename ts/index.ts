@@ -2,6 +2,7 @@
 import './PluginParameters';
 import './AMPSManager';
 import './SoundManager';
+import './DataManager';
 import './MovingSequel'
 import './Game_CharacterBase';
 import './Game_Player';
