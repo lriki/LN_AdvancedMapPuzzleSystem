@@ -34,6 +34,7 @@ declare global {
         _mapObjectEventTrigger: EventTrigger;
         _mapSkillRange: number;
         _reactionMapSkill: string;  // "reaction:" の値を toLocaleLowerCase したもの。
+        _positionalObject: boolean; // 位置記憶オブジェクトかどうか
 
         clearMapObjectSettings(): void;
         //objectType(): ObjectType;
@@ -66,6 +67,7 @@ Game_Event.prototype.clearMapObjectSettings = function(): void {
     this._mapObjectEventTrigger = EventTrigger.None;
     this._mapSkillRange = -1;
     this._reactionMapSkill = '';
+    this._positionalObject = false;
     this._mapSkillEffectInitialPosition = MapSkillEffectInitialPosition.Default;
 }
 
@@ -314,6 +316,9 @@ Game_Event.prototype.parseListCommentForAMPSObject = function(): boolean {
                                 case "front":
                                     this._mapSkillEffectInitialPosition = MapSkillEffectInitialPosition.Front; 
                             }
+                            break;
+                        case "positional":
+                            this._positionalObject = true;
                             break;
                     }
                 }
