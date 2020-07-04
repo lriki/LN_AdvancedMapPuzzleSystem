@@ -1,6 +1,7 @@
 /// <reference types="rpgmakermv_typescript_dts"/>
 
 import { paramMapSkillEffectsMapId } from "./PluginParameters";
+import { Game_AMPSVariables } from "./Game_AMPSVariables";
 
 //var $effectsMapData: IDataMap;
 //var $dataMap          = null;
@@ -38,6 +39,7 @@ DataManager.onLoad = function(object: any) {
 
 export class AMPSManager
 {
+    static gameAMPSVariables: Game_AMPSVariables = new Game_AMPSVariables();
     
     static tempMapSkillEffectDataId: number = -1;
     static tempMapSkillEffectInvokerId: number = -1;

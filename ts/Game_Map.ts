@@ -4,7 +4,7 @@ import { AMPSManager } from './AMPSManager'
 import { assert } from './Common';
 import { Game_AMPSVariables, ObjectPosition } from './Game_AMPSVariables';
 
-export var g_gameAMPSVariables: Game_AMPSVariables;
+//export var g_gameAMPSVariables: Game_AMPSVariables;
 
 declare global {
     interface Game_Map {
@@ -172,21 +172,21 @@ Game_Map.prototype.isSlipperyTile = function(x: number, y: number): boolean {
 }
 
 Game_Map.prototype.savePositionalObjects = function() {
-    console.log("savePositionalObjects", g_gameAMPSVariables);
+    console.log("savePositionalObjects", AMPSManager.gameAMPSVariables);
     this.events().forEach((event) => {
         if (event.isPositionalObject()) {
             let pos: ObjectPosition = { x: event.x, y: event.y };
-            g_gameAMPSVariables.setSavedPosition(this.mapId(), event.eventId(), pos);
+            AMPSManager.gameAMPSVariables.setSavedPosition(this.mapId(), event.eventId(), pos);
             console.log("saved", event.eventId(), pos);
         }
     });
 }
 
 Game_Map.prototype.loadPositionalObjects = function() {
-    console.log("loadPositionalObjects");
+    console.log("loadPositionalObjects", AMPSManager.gameAMPSVariables);
     this.events().forEach((event) => {
         if (event.isPositionalObject()) {
-            const pos = g_gameAMPSVariables.savedPosition(this.mapId(), event.eventId());
+            const pos = AMPSManager.gameAMPSVariables.savedPosition(this.mapId(), event.eventId());
             if (pos) {
                 event.locate(pos.x, pos.y);
                 console.log("loaded", event.eventId(), pos);

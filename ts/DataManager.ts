@@ -2,9 +2,10 @@
 /// <reference types="rpgmakermv_typescript_dts"/>
 /// <reference path="./Game_AMPSVariables.ts" />
 import { paramGuideLineTerrainTag } from './PluginParameters'
-import { Game_AMPSVariables } from './Game_AMPSVariables';
+import { Game_AMPSVariables, Game_AMPSVariablesData } from './Game_AMPSVariables';
+import { AMPSManager } from './AMPSManager';
 
-export var g_gameAMPSVariables: Game_AMPSVariables;
+//export var g_gameAMPSVariables: Game_AMPSVariables;
 
 //var _SoundManager_preloadImportantSounds = SoundManager.preloadImportantSounds;
 //S/oundManager.preloadImportantSounds = function() {
@@ -13,14 +14,14 @@ export var g_gameAMPSVariables: Game_AMPSVariables;
 declare global {
     interface ISaveContents
     {
-        ampsVariables?  : Game_AMPSVariables;
+        ampsVariables?  : Game_AMPSVariablesData;
     }
 }
 
 const DataManager_makeSaveContents = DataManager.makeSaveContents;
 DataManager.makeSaveContents = function() {
     var contents = DataManager_makeSaveContents.call(DataManager);
-    contents.ampsVariables = g_gameAMPSVariables;
+    contents.ampsVariables = AMPSManager.gameAMPSVariables._data;
     console.log("save", contents.ampsVariables);
     return contents;
 };
@@ -31,6 +32,6 @@ DataManager.extractSaveContents = function(contents) {
     let anyContents = (contents as any);
     console.log("load", anyContents.ampsVariables);
     if (anyContents.ampsVariables) {
-        g_gameAMPSVariables = anyContents.ampsVariables;// as Game_AMPSVariables;
+        AMPSManager.gameAMPSVariables._data = anyContents.ampsVariables;// as Game_AMPSVariables;
     }
 };
