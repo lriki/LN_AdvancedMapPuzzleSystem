@@ -13,7 +13,7 @@ English document in process: [English page](README.en_US.md)
 
 | Version | File |
 |---------|------|
-| v0.4.4  | [:arrow_down: LN_AdvancedMapPuzzleSystem.js](https://raw.githubusercontent.com/lriki/LN_AdvancedMapPuzzleSystem/master/js/plugins/LN_AdvancedMapPuzzleSystem.js) |
+| v0.5.0  | [:arrow_down: LN_AdvancedMapPuzzleSystem.js](https://raw.githubusercontent.com/lriki/LN_AdvancedMapPuzzleSystem/master/js/plugins/LN_AdvancedMapPuzzleSystem.js) |
 
 
 ----------
@@ -194,16 +194,6 @@ RPG ツクール MV で新規プロジェクトを作成し、[:arrow_down: こ�
 ![](docs/img/4.png)
 
 
-### マップオブジェクトの移動を確定する
-
-![ToDo](http://img.shields.io/badge/status-ToDo-red.svg?style=flat)
-
-
-### 謎解きクリアによる位置の永続化
-
-![ToDo](http://img.shields.io/badge/status-ToDo-red.svg?style=flat)
-
-
 ## マップオブジェクト - 箱
 
 
@@ -309,6 +299,14 @@ RPG ツクール MV で新規プロジェクトを作成し、[:arrow_down: こ�
 ![](docs/img/19.gif)
 
 なお、`trigger` が指定されている場合、通常の "トリガー" によるイベント実行は行われません。
+
+
+### マップオブジェクトの位置の永続化
+
+パラメータとして `positional` を指定すると、マップを移動しても位置を記憶するようになります。
+
+![](docs/img/20.png)
+
 
 ## マップオブジェクト - スイッチ
 

@@ -58,6 +58,8 @@ declare global {
         _getonoffStartX: number;        // オブジェクト乗降時の移動モーションが不自然に見えないように補間したりするパラメータ
         _getonoffStartY: number;        // オブジェクト乗降時の移動モーションが不自然に見えないように補間したりするパラメータ
 
+        _positionalObject: boolean; // 位置記憶オブジェクトかどうか
+
         isRidding(): boolean;
         isMapObject(): boolean;
         isBoxType(): boolean;
@@ -73,6 +75,7 @@ declare global {
         isFalling(): boolean;
         checkPassRide(x: number, y: number): boolean;
         isOnSlipperyTile(): boolean;
+        isPositionalObject(): boolean;
 
         moveStraightMain(d: number): void;
         attemptMoveGroundToGround(d: number): boolean;
@@ -282,6 +285,13 @@ Game_CharacterBase.prototype.isFalling = function(): boolean {
 Game_CharacterBase.prototype.isOnSlipperyTile = function(): boolean {
     return $gameMap.isSlipperyTile(this._x, this._y);
 };
+
+/**
+ * 位置記憶オブジェクトか？
+ */
+Game_CharacterBase.prototype.isPositionalObject = function(): boolean {
+    return this._positionalObject;
+}
 
 /**
  * 滑っているときのアニメーションパターン

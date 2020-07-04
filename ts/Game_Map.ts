@@ -2,9 +2,14 @@
 import { paramMapSkillEffectsMapId, paramGuideLineTerrainTag, paramAllowAllMapPuzzles, paramSlipRegion } from './PluginParameters'
 import { AMPSManager } from './AMPSManager'
 import { assert } from './Common';
+import { Game_AMPSVariables, ObjectPosition } from './Game_AMPSVariables';
+
+//export var g_gameAMPSVariables: Game_AMPSVariables;
 
 declare global {
     interface Game_Map {
+        //ampsVariables: Game_AMPSVariables;
+
         _puzzleEnabled: boolean;
         _spawnMapSkillEffectEventcallback: (event: Game_Event) => void;
         _despawnMapSkillEffectEventcallback: (event: Game_Event) => void;
@@ -17,11 +22,23 @@ declare global {
         setSpawnMapSkillEffectEventHandler(callback: (event: Game_Event) => void): void;
         setDespawnMapSkillEffectEventHandler(callback: (event: Game_Event) => void): void;
         isSlipperyTile(x: number, y: number): boolean;
+
+        savePositionalObjects(): void;
+        loadPositionalObjects(): void;
     }
+}
+
+var _Game_Map_initialize = Game_Map.prototype.initialize;
+Game_Map.prototype.initialize = function() {
+    _Game_Map_initialize.call(this);
+    //this.ampsVariables = new Game_AMPSVariables();
 }
 
 var _Game_Map_setup = Game_Map.prototype.setup;
 Game_Map.prototype.setup = function(mapId) {
+    // 実際に切り替えが起こるまでに、移動前マップの状態を保存する
+    this.savePositionalObjects();
+
     _Game_Map_setup.call(this, mapId);
 
     if ($dataMap.meta.LNPuzzleEnable) {
@@ -36,6 +53,8 @@ Game_Map.prototype.setup = function(mapId) {
     else {
         this._puzzleEnabled = false;
     }
+
+    this.loadPositionalObjects();
 }
 
 Game_Map.prototype.isPuzzleEnabled = function(): boolean {
@@ -152,3 +171,26 @@ Game_Map.prototype.isSlipperyTile = function(x: number, y: number): boolean {
     return (paramSlipRegion !== 0 && this.regionId(x, y) === paramSlipRegion);
 }
 
+Game_Map.prototype.savePositionalObjects = function() {
+    console.log("savePositionalObjects", AMPSManager.gameAMPSVariables);
+    this.events().forEach((event) => {
+        if (event.isPositionalObject()) {
+            let pos: ObjectPosition = { x: event.x, y: event.y };
+            AMPSManager.gameAMPSVariables.setSavedPosition(this.mapId(), event.eventId(), pos);
+            console.log("saved", event.eventId(), pos);
+        }
+    });
+}
+
+Game_Map.prototype.loadPositionalObjects = function() {
+    console.log("loadPositionalObjects", AMPSManager.gameAMPSVariables);
+    this.events().forEach((event) => {
+        if (event.isPositionalObject()) {
+            const pos = AMPSManager.gameAMPSVariables.savedPosition(this.mapId(), event.eventId());
+            if (pos) {
+                event.locate(pos.x, pos.y);
+                console.log("loaded", event.eventId(), pos);
+            }
+        }
+    });
+}

@@ -66,6 +66,7 @@ Game_Event.prototype.clearMapObjectSettings = function(): void {
     this._mapObjectEventTrigger = EventTrigger.None;
     this._mapSkillRange = -1;
     this._reactionMapSkill = '';
+    this._positionalObject = false;
     this._mapSkillEffectInitialPosition = MapSkillEffectInitialPosition.Default;
 }
 
@@ -314,6 +315,9 @@ Game_Event.prototype.parseListCommentForAMPSObject = function(): boolean {
                                 case "front":
                                     this._mapSkillEffectInitialPosition = MapSkillEffectInitialPosition.Front; 
                             }
+                            break;
+                        case "positional":
+                            this._positionalObject = true;
                             break;
                     }
                 }
