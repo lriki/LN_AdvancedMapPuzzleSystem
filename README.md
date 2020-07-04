@@ -13,7 +13,7 @@ English document in process: [English page](README.en_US.md)
 
 | Version | File |
 |---------|------|
-| v0.4.4  | [:arrow_down: LN_AdvancedMapPuzzleSystem.js](https://raw.githubusercontent.com/lriki/LN_AdvancedMapPuzzleSystem/master/js/plugins/LN_AdvancedMapPuzzleSystem.js) |
+| v0.5.0  | [:arrow_down: LN_AdvancedMapPuzzleSystem.js](https://raw.githubusercontent.com/lriki/LN_AdvancedMapPuzzleSystem/master/js/plugins/LN_AdvancedMapPuzzleSystem.js) |
 
 
 ----------
