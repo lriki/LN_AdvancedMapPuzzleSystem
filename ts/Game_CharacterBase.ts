@@ -38,6 +38,7 @@ declare global {
         _objectTypeEffect: boolean;
         _objectTypeReactor: boolean;
         _movingBehavior: MovingBehavior | undefined;
+        _movingBehaviorData: any;   // FIXME: _movingBehavior に含めるとシリアライズするときに都合が悪い。TypeScript から class シリアライズの上手い方法見つかればいいけど…。
 
         _ridderCharacterId: number; // this に乗っているオブジェクト (this の上にあるオブジェクト)
         _riddeeCharacterId: number; // this が乗っているオブジェクと (this の下にあるオブジェクト)
@@ -173,25 +174,6 @@ Game_CharacterBase.prototype.moveStraight = function (d: number) {
         }
     
         this.moveStraightMain(d);
-        
-        // 感圧板チェック
-        if (this.isMovementSucceeded(this.x, this.y)) {
-            const plate = $gameMap.eventsXy(this.x, this.y).find(event => { return event.isPlateType(); });
-            if (plate) {
-                console.log("on", plate);
-                if (plate.objectId() != this.objectId() &&              // 自分自身に乗らないようにする
-                    this._riddeePlateCharacterId != plate.objectId() && // 別の Plate へ乗るときだけ
-                    !this.isThrough()) {                                // すり抜け確認 (Follower 非表示の対策)
-                    this._riddeePlateCharacterId = plate.objectId();
-                    this._moveToPlateEnter = true;
-                }
-            }
-            else if (this._riddeePlateCharacterId != -1) {
-                // 降りるとき
-                this._moveToPlateLeave = this._riddeePlateCharacterId;
-                this._riddeePlateCharacterId = -1;
-            }
-        }
     }
     else {
         _Game_CharacterBase_moveStraight.call(this, d);
@@ -774,6 +756,10 @@ Game_CharacterBase.prototype.update = function() {
             this._realY = obj._realY - (obj.objectHeight());
         }
     }
+
+    if (this._movingBehavior) {
+        this._movingBehavior.onUpdate();
+    }
 }
 
 var _Game_CharacterBase_updateStop = Game_CharacterBase.prototype.updateStop;
@@ -932,7 +918,27 @@ Game_CharacterBase.prototype.resetGetOnOffParams = function() {
 Game_CharacterBase.prototype.raiseStepEnd = function() {
     this.onStepEnd();
 
+    
+    // 感圧板チェック
+    if (this.isMovementSucceeded(this.x, this.y)) {
+        const plate = $gameMap.eventsXy(this.x, this.y).find(event => { return event.isPlateType(); });
+        if (plate) {
+            if (plate.objectId() != this.objectId() &&              // 自分自身に乗らないようにする
+                this._riddeePlateCharacterId != plate.objectId() && // 別の Plate へ乗るときだけ
+                !this.isThrough()) {                                // すり抜け確認 (Follower 非表示の対策)
+                this._riddeePlateCharacterId = plate.objectId();
+                this._moveToPlateEnter = true;
+            }
+        }
+        else if (this._riddeePlateCharacterId != -1) {
+            // 降りるとき
+            this._moveToPlateLeave = this._riddeePlateCharacterId;
+            this._riddeePlateCharacterId = -1;
+        }
+    }
+
     if (this._moveToPlateLeave >= 0) {
+        console.log("downnn???");
         const plate = MovingHelper.getCharacterById(this._moveToPlateLeave);
         if (plate._movingBehavior) {
             plate._movingBehavior.onRidderLeaved(this);

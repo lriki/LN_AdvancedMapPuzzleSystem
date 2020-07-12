@@ -208,6 +208,7 @@ var _Game_Event_setupPage = Game_Event.prototype.setupPage;
 Game_Event.prototype.setupPage = function() {
     let oldHeight = this.objectHeight();
     let oldRider = this.rider();
+    let oldObjectType = this.isPlateType(); // TODO: このへん bool じゃなくて enum のほうがいいかも
 
     _Game_Event_setupPage.call(this);
     
@@ -226,8 +227,11 @@ Game_Event.prototype.setupPage = function() {
         }
     }
 
-    if (this.isPlateType()) {
-        this._movingBehavior = new PlateMovingBehavior(this.objectId());
+    if (this.isPlateType() != oldObjectType && this.isPlateType()) {
+        this._movingBehavior = new PlateMovingBehavior(this);
+    }
+    else if (!this.isPlateType()) {
+        this._movingBehavior = undefined;
     }
 }
 
