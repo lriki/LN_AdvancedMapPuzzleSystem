@@ -106,6 +106,7 @@ declare global {
         updateFall(): void;
         updateSlippery(): void;
         resetGetOnOffParams(): void;
+        updatePlateNotification(): void;
 
         raiseStepEnd(): void;
         raiseStop(): void;
@@ -915,12 +916,8 @@ Game_CharacterBase.prototype.resetGetOnOffParams = function() {
     this._getonoffStartY = this._realY;
 }
 
-//------------------------------------------------------------------------------
-// タイミング発火
 
-Game_CharacterBase.prototype.raiseStepEnd = function() {
-    this.onStepEnd();
-
+Game_CharacterBase.prototype.updatePlateNotification = function() {
     
     // 感圧板チェック
     if (this.isMovementSucceeded(this.x, this.y)) {
@@ -941,7 +938,6 @@ Game_CharacterBase.prototype.raiseStepEnd = function() {
     }
 
     if (this._moveToPlateLeave >= 0) {
-        console.log("downnn???");
         const plate = MovingHelper.getCharacterById(this._moveToPlateLeave);
         const behavior = AMPSManager.behavior(plate._movingBehaviorType);
         if (behavior) {
@@ -957,6 +953,15 @@ Game_CharacterBase.prototype.raiseStepEnd = function() {
         }
         this._moveToPlateEnter = false;
     }
+}
+
+//------------------------------------------------------------------------------
+// タイミング発火
+
+Game_CharacterBase.prototype.raiseStepEnd = function() {
+    this.onStepEnd();
+
+    this.updatePlateNotification();
 
 
     if (this.isOnSlipperyTile()) {

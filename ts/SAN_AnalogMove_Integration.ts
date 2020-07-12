@@ -67,14 +67,17 @@ Game_CharacterBase.prototype.updateMover = function() {
             if (Input.dir8 == 6 && Math.abs(this._mover._lasPosVec.x() - this._mover._posVec.x()) < thr) {
                 this.moveStraight(6);
             }
-            if (Input.dir8 == 4 && Math.abs(this._mover._lasPosVec.x() - this._mover._posVec.x()) < thr) {
+            else if (Input.dir8 == 4 && Math.abs(this._mover._lasPosVec.x() - this._mover._posVec.x()) < thr) {
                 this.moveStraight(4);
             }
-            if (Input.dir8 == 8 && Math.abs(this._mover._lasPosVec.y() - this._mover._posVec.y()) < thr) {
+            else if (Input.dir8 == 8 && Math.abs(this._mover._lasPosVec.y() - this._mover._posVec.y()) < thr) {
                 this.moveStraight(8);
             }
-            if (Input.dir8 == 2 && Math.abs(this._mover._lasPosVec.y() - this._mover._posVec.y()) < thr) {
+            else if (Input.dir8 == 2 && Math.abs(this._mover._lasPosVec.y() - this._mover._posVec.y()) < thr) {
                 this.moveStraight(2);
+            }
+            else {
+                this.raiseStepEnd();
             }
         }
     }
