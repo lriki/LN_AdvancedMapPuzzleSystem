@@ -288,6 +288,9 @@ Game_Event.prototype.parseListCommentForAMPSObject = function(): boolean {
                         case "box":
                             this._objectTypeBox = (tokens.length >= 2) ? Boolean(tokens[1].trim()) : true;
                             break;
+                        case "plate":
+                            this._objectTypePlate = (tokens.length >= 2) ? Boolean(tokens[1].trim()) : true;
+                            break;
                         case "effect":
                             this._objectTypeEffect = (tokens.length >= 2) ? Boolean(tokens[1].trim()) : true;
                             break;

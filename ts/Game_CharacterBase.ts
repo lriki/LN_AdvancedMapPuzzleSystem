@@ -33,6 +33,7 @@ declare global {
     interface Game_CharacterBase {
         // ObjectType
         _objectTypeBox: boolean;
+        _objectTypePlate: boolean;
         _objectTypeEffect: boolean;
         _objectTypeReactor: boolean;
 
@@ -63,6 +64,7 @@ declare global {
         isRidding(): boolean;
         isMapObject(): boolean;
         isBoxType(): boolean;
+        isPlateType(): boolean;
         isEffectType(): boolean;
         isReactorType(): boolean;
         objectId(): number;
@@ -110,10 +112,14 @@ declare global {
     }
 }
 
+//------------------------------------------------------------------------------
+// Overrides
+
 var _Game_CharacterBase_initMembers = Game_CharacterBase.prototype.initMembers;
 Game_CharacterBase.prototype.initMembers = function() {
     _Game_CharacterBase_initMembers.call(this);
     this._objectTypeBox = false;
+    this._objectTypePlate = false;
     this._objectTypeEffect = false;
     this._objectTypeReactor = false;
     this._ridderCharacterId = -1;
@@ -179,6 +185,17 @@ Game_CharacterBase.prototype.moveDiagonally = function (horz: number, vert: numb
     }
 };
 
+var _Game_CharacterBase_isThrough = Game_CharacterBase.prototype.isThrough;
+Game_CharacterBase.prototype.isThrough = function() {
+    if (this.isPlateType()) {
+        return true;    // Plate は常に通行可能
+    }
+    return _Game_CharacterBase_isThrough.call(this);
+};
+
+//------------------------------------------------------------------------------
+// 
+
 /**
  * 別のオブジェクトに乗っているか？
  * 
@@ -193,13 +210,16 @@ Game_CharacterBase.prototype.isRidding = function(): boolean {
 Game_CharacterBase.prototype.isMapObject = function() {
     return this.isBoxType() || this.isEffectType() || this.isReactorType();
 };
-Game_CharacterBase.prototype.isBoxType = function(): boolean  {
+Game_CharacterBase.prototype.isBoxType = function(): boolean {
     return this._objectTypeBox;
 };
-Game_CharacterBase.prototype.isEffectType = function(): boolean  {
+Game_CharacterBase.prototype.isPlateType = function(): boolean {
+    return this._objectTypePlate;
+};
+Game_CharacterBase.prototype.isEffectType = function(): boolean {
     return this._objectTypeEffect;
 };
-Game_CharacterBase.prototype.isReactorType = function(): boolean  {
+Game_CharacterBase.prototype.isReactorType = function(): boolean {
     return this._objectTypeReactor;
 };
 
@@ -306,7 +326,13 @@ Game_CharacterBase.prototype.pattern = function() {
 
 var _Game_CharacterBase_screenZ = Game_CharacterBase.prototype.screenZ;
 Game_CharacterBase.prototype.screenZ = function() {
+
     var base = _Game_CharacterBase_screenZ.call(this);
+    if (this.isPlateType()) {
+        base -= (this._priorityType) * 2;
+    }
+
+
     var riddingObject = this.riddingObject();
     if (this.isRidding() && riddingObject) {
         base += riddingObject.screenZ();
