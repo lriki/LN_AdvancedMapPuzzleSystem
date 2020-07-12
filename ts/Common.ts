@@ -39,3 +39,8 @@ export enum MovingMode {
     ObjectToObject,
     ObjectToGround,
 }
+
+export enum BehaviorType {
+    None = 0,
+    Plate = 1,
+}

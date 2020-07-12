@@ -15,12 +15,13 @@
  * 
  */
 
-import { assert, MovingMode } from './Common'
+import { assert, MovingMode, BehaviorType } from './Common'
 import { MovingHelper } from './MovingHelper'
 import { AMPS_SoundManager } from "./SoundManager";
 import { MovingSequel, MovingSequel_PushMoving } from "./MovingSequel";
 import { paramGuideLineTerrainTag, paramFallingSpeed, paramSlippingAnimationPattern } from './PluginParameters';
 import { MovingBehavior } from './MovingBehavior';
+import { AMPSManager } from './AMPSManager';
 
 const JUMP_WAIT_COUNT   = 10;
 
@@ -37,7 +38,8 @@ declare global {
         _objectTypePlate: boolean;
         _objectTypeEffect: boolean;
         _objectTypeReactor: boolean;
-        _movingBehavior: MovingBehavior | undefined;
+        //_movingBehavior: MovingBehavior | undefined;
+        _movingBehaviorType: BehaviorType;
         _movingBehaviorData: any;   // FIXME: _movingBehavior に含めるとシリアライズするときに都合が悪い。TypeScript から class シリアライズの上手い方法見つかればいいけど…。
 
         _ridderCharacterId: number; // this に乗っているオブジェクト (this の上にあるオブジェクト)
@@ -128,7 +130,7 @@ Game_CharacterBase.prototype.initMembers = function() {
     this._objectTypePlate = false;
     this._objectTypeEffect = false;
     this._objectTypeReactor = false;
-    this._movingBehavior = undefined;
+    this._movingBehaviorType = BehaviorType.None;
     this._ridderCharacterId = -1;
     this._riddeeCharacterId = -1;
     this._riddeePlateCharacterId = -1;
@@ -757,8 +759,9 @@ Game_CharacterBase.prototype.update = function() {
         }
     }
 
-    if (this._movingBehavior) {
-        this._movingBehavior.onUpdate();
+    const behavior = AMPSManager.behavior(this._movingBehaviorType);
+    if (behavior) {
+        behavior.onUpdate(this);
     }
 }
 
@@ -940,15 +943,17 @@ Game_CharacterBase.prototype.raiseStepEnd = function() {
     if (this._moveToPlateLeave >= 0) {
         console.log("downnn???");
         const plate = MovingHelper.getCharacterById(this._moveToPlateLeave);
-        if (plate._movingBehavior) {
-            plate._movingBehavior.onRidderLeaved(this);
+        const behavior = AMPSManager.behavior(plate._movingBehaviorType);
+        if (behavior) {
+            behavior.onRidderLeaved(plate, this);
         }
         this._moveToPlateLeave = -1;
     }
     if (this._moveToPlateEnter) {
         const plate = MovingHelper.getCharacterById(this._riddeePlateCharacterId);
-        if (plate._movingBehavior) {
-            plate._movingBehavior.onRidderEnterd(this);
+        const behavior = AMPSManager.behavior(plate._movingBehaviorType);
+        if (behavior) {
+            behavior.onRidderEnterd(plate, this);
         }
         this._moveToPlateEnter = false;
     }

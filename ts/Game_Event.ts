@@ -1,6 +1,6 @@
 /// <reference types="rpgmakermv_typescript_dts"/>
 import { paramMapSkillEffectsMapId } from './PluginParameters'
-import { EventTrigger, strToEventTrigger, assert } from './Common'
+import { EventTrigger, strToEventTrigger, assert, BehaviorType } from './Common'
 import { AMPSManager } from './AMPSManager';
 import { MovingHelper } from './MovingHelper';
 import { PlateMovingBehavior } from './MovingBehavior';
@@ -228,10 +228,11 @@ Game_Event.prototype.setupPage = function() {
     }
 
     if (this.isPlateType() != oldObjectType && this.isPlateType()) {
-        this._movingBehavior = new PlateMovingBehavior(this);
+        this._movingBehaviorType = BehaviorType.Plate;
+        AMPSManager.behavior(this._movingBehaviorType)?.onAttach(this);
     }
     else if (!this.isPlateType()) {
-        this._movingBehavior = undefined;
+        this._movingBehaviorType = BehaviorType.None;
     }
 }
 
