@@ -1,5 +1,7 @@
-
-
+/**
+ * 大方針として、オブジェクトに乗っているときなどは AnalogMove を禁止する。
+ * Game_Player.prototype.shouleMoveDefault() 参照。
+ */
 
 import { assert, MovingMode } from './Common'
 

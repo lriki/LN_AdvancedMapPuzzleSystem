@@ -172,24 +172,24 @@ Game_Map.prototype.isSlipperyTile = function(x: number, y: number): boolean {
 }
 
 Game_Map.prototype.savePositionalObjects = function() {
-    console.log("savePositionalObjects", AMPSManager.gameAMPSVariables);
+    //console.log("savePositionalObjects", AMPSManager.gameAMPSVariables);
     this.events().forEach((event) => {
         if (event.isPositionalObject()) {
             let pos: ObjectPosition = { x: event.x, y: event.y };
             AMPSManager.gameAMPSVariables.setSavedPosition(this.mapId(), event.eventId(), pos);
-            console.log("saved", event.eventId(), pos);
+            //console.log("saved", event.eventId(), pos);
         }
     });
 }
 
 Game_Map.prototype.loadPositionalObjects = function() {
-    console.log("loadPositionalObjects", AMPSManager.gameAMPSVariables);
+    //console.log("loadPositionalObjects", AMPSManager.gameAMPSVariables);
     this.events().forEach((event) => {
         if (event.isPositionalObject()) {
             const pos = AMPSManager.gameAMPSVariables.savedPosition(this.mapId(), event.eventId());
             if (pos) {
                 event.locate(pos.x, pos.y);
-                console.log("loaded", event.eventId(), pos);
+                //console.log("loaded", event.eventId(), pos);
             }
         }
     });

@@ -3,6 +3,7 @@ import { paramMapSkillEffectsMapId } from './PluginParameters'
 import { EventTrigger, strToEventTrigger, assert } from './Common'
 import { AMPSManager } from './AMPSManager';
 import { MovingHelper } from './MovingHelper';
+import { PlateMovingBehavior } from './MovingBehavior';
 
 enum MapSkillEffectInitialPosition {
     // 発動者と同じ位置
@@ -37,6 +38,7 @@ declare global {
 
         clearMapObjectSettings(): void;
         //objectType(): ObjectType;
+        mapObjectEventTrigger(): EventTrigger;
         isDynamicMapEffectEvent(): boolean;
         reactionMapSkill(): string;
         mapSkillEffectInvoker(): Game_Character | undefined;
@@ -147,6 +149,10 @@ Game_Event.prototype.isFallable = function(): boolean {
     return this._fallable;
 };
 
+Game_Event.prototype.mapObjectEventTrigger = function(): EventTrigger {
+    return this._mapObjectEventTrigger;
+};
+
 Game_Event.prototype.isDynamicMapEffectEvent = function(): boolean {
     return this._mapId === paramMapSkillEffectsMapId && this._mapSkillEffectDataId >= 0;
 };
@@ -218,6 +224,10 @@ Game_Event.prototype.setupPage = function() {
                 target.startAsReactor();
             }
         }
+    }
+
+    if (this.isPlateType()) {
+        this._movingBehavior = new PlateMovingBehavior(this.objectId());
     }
 }
 

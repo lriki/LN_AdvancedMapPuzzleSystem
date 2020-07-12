@@ -20,6 +20,7 @@ import { MovingHelper } from './MovingHelper'
 import { AMPS_SoundManager } from "./SoundManager";
 import { MovingSequel, MovingSequel_PushMoving } from "./MovingSequel";
 import { paramGuideLineTerrainTag, paramFallingSpeed, paramSlippingAnimationPattern } from './PluginParameters';
+import { MovingBehavior } from './MovingBehavior';
 
 const JUMP_WAIT_COUNT   = 10;
 
@@ -36,9 +37,11 @@ declare global {
         _objectTypePlate: boolean;
         _objectTypeEffect: boolean;
         _objectTypeReactor: boolean;
+        _movingBehavior: MovingBehavior | undefined;
 
         _ridderCharacterId: number; // this に乗っているオブジェクト (this の上にあるオブジェクト)
         _riddeeCharacterId: number; // this が乗っているオブジェクと (this の下にあるオブジェクト)
+        _riddeePlateCharacterId: number; // this が乗っている Plate (this の下にあるオブジェクト)
         _waitAfterJump: number;
         _extraJumping: boolean;     // AMPS によるジャンプかどうか。見た目上の問題を修正するため微調整を入れたりする。
         _ridingScreenZPriority: number;
@@ -46,6 +49,8 @@ declare global {
         _movingDirection: number;   // 自動移動の際の移動方向。滑りタイル状で向き固定のまま移動したりする。
         _forcePositionAdjustment: boolean;  // moveToDir 移動時、移動先位置を強制的に round するかどうか（半歩移動の封印）
 
+        _moveToPlateEnter: boolean;    // 現在の移動ステップが終わったら MovingBehavior に通知する
+        _moveToPlateLeave: number;    // 現在の移動ステップが終わったら MovingBehavior に通知する
         _moveToFalling: boolean;    // 現在の移動ステップが終わったら落下する
         _fallingState: FallingState;
         _fallingOriginalSpeed: number;
@@ -122,8 +127,10 @@ Game_CharacterBase.prototype.initMembers = function() {
     this._objectTypePlate = false;
     this._objectTypeEffect = false;
     this._objectTypeReactor = false;
+    this._movingBehavior = undefined;
     this._ridderCharacterId = -1;
     this._riddeeCharacterId = -1;
+    this._riddeePlateCharacterId = -1;
     this._waitAfterJump = 0;
     this._extraJumping = false;
     this._ridingScreenZPriority = -1;
@@ -131,6 +138,8 @@ Game_CharacterBase.prototype.initMembers = function() {
     this._movingDirection = 0;
     this._forcePositionAdjustment = false;
 
+    this._moveToPlateEnter = false;
+    this._moveToPlateLeave = -1;
     this._moveToFalling = false;
     this._fallingState = FallingState.None;
     this._fallingOriginalSpeed = 0;
@@ -164,6 +173,25 @@ Game_CharacterBase.prototype.moveStraight = function (d: number) {
         }
     
         this.moveStraightMain(d);
+        
+        // 感圧板チェック
+        if (this.isMovementSucceeded(this.x, this.y)) {
+            const plate = $gameMap.eventsXy(this.x, this.y).find(event => { return event.isPlateType(); });
+            if (plate) {
+                console.log("on", plate);
+                if (plate.objectId() != this.objectId() &&              // 自分自身に乗らないようにする
+                    this._riddeePlateCharacterId != plate.objectId() && // 別の Plate へ乗るときだけ
+                    !this.isThrough()) {                                // すり抜け確認 (Follower 非表示の対策)
+                    this._riddeePlateCharacterId = plate.objectId();
+                    this._moveToPlateEnter = true;
+                }
+            }
+            else if (this._riddeePlateCharacterId != -1) {
+                // 降りるとき
+                this._moveToPlateLeave = this._riddeePlateCharacterId;
+                this._riddeePlateCharacterId = -1;
+            }
+        }
     }
     else {
         _Game_CharacterBase_moveStraight.call(this, d);
@@ -903,6 +931,22 @@ Game_CharacterBase.prototype.resetGetOnOffParams = function() {
 
 Game_CharacterBase.prototype.raiseStepEnd = function() {
     this.onStepEnd();
+
+    if (this._moveToPlateLeave >= 0) {
+        const plate = MovingHelper.getCharacterById(this._moveToPlateLeave);
+        if (plate._movingBehavior) {
+            plate._movingBehavior.onRidderLeaved(this);
+        }
+        this._moveToPlateLeave = -1;
+    }
+    if (this._moveToPlateEnter) {
+        const plate = MovingHelper.getCharacterById(this._riddeePlateCharacterId);
+        if (plate._movingBehavior) {
+            plate._movingBehavior.onRidderEnterd(this);
+        }
+        this._moveToPlateEnter = false;
+    }
+
 
     if (this.isOnSlipperyTile()) {
         $gameTemp.clearDestination();
