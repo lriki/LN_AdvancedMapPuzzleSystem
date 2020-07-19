@@ -167,11 +167,6 @@ Game_CharacterBase.prototype.moveStraight = function (d: number) {
     if ($gameMap.isPuzzleEnabled()) {
         assert(d == 2 || d == 4 || d == 6 || d == 8);
         
-        if (this._waitAfterJump > 0) {
-            this._waitAfterJump--;
-            return;
-        }
-    
         if (MovingSequel_PushMoving.tryStartPushObjectAndMove(this, d)) {
             return;
         }
@@ -368,8 +363,6 @@ Game_CharacterBase.prototype.screenZ = function() {
  * （他オブジェクトと関係して動くものは MovingSequel で定義する）
  */
 Game_CharacterBase.prototype.moveStraightMain = function(d: number) {
-
-
     this.setMovementSuccess(false);
 
     if (!this.isRidding()) {
@@ -743,7 +736,16 @@ Game_CharacterBase.prototype.update = function() {
         }
     }
 
-    _Game_CharacterBase_update.call(this);
+    if (this._waitAfterJump > 0) {
+        // ジャンプ後にわずかな待ち時間を取ることで、着地した "手ごたえ" を演出するためのウェイト。
+        // このウェイト中は stop と似た扱いなのだが、updateStop() に処理を回してしまうと、
+        // 移動ルート強制されているキャラクターが次のインデックスに進んでしまう。
+        // 丁寧にやるなら updateWait() みたいなのを用意したいところだが、ひとまずは待つだけなので、単純な if で対策する。
+        this._waitAfterJump--;
+    }
+    else {
+        _Game_CharacterBase_update.call(this);
+    }
 
     if (this.isFalling()) {
         this.updateFall();
