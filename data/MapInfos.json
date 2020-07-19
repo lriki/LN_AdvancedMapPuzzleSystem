@@ -21,10 +21,10 @@ null,
 {"id":19,"expanded":false,"name":"Sample5-CollapseBox","order":7,"parentId":2,"scrollX":832,"scrollY":640},
 {"id":20,"expanded":true,"name":"Test-設定","order":26,"parentId":0,"scrollX":819,"scrollY":461},
 {"id":21,"expanded":false,"name":"ワールドマップ","order":27,"parentId":20,"scrollX":819,"scrollY":461},
-{"id":22,"expanded":false,"name":"滑る床","order":14,"parentId":3,"scrollX":1404,"scrollY":790.2857142857142},
+{"id":22,"expanded":false,"name":"滑る床","order":14,"parentId":3,"scrollX":1092,"scrollY":614.6666666666666},
 {"id":23,"expanded":false,"name":"位置記憶","order":19,"parentId":7,"scrollX":1404,"scrollY":790.2857142857142},
 {"id":24,"expanded":false,"name":"位置記憶2","order":20,"parentId":23,"scrollX":1404,"scrollY":790.2857142857142},
 {"id":25,"expanded":false,"name":"Sample6-Positional","order":9,"parentId":2,"scrollX":1404,"scrollY":790.2857142857142},
 {"id":26,"expanded":false,"name":"Sample6-Positional-sub","order":10,"parentId":25,"scrollX":1404,"scrollY":790.2857142857142},
-{"id":27,"expanded":false,"name":"Plate","order":21,"parentId":7,"scrollX":1404,"scrollY":790.2857142857142}
+{"id":27,"expanded":false,"name":"Plate","order":21,"parentId":7,"scrollX":1081.3333333333333,"scrollY":790.6666666666666}
 ]

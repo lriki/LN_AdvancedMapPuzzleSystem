@@ -77,6 +77,9 @@ Game_CharacterBase.prototype.updateMover = function() {
                 this.moveStraight(2);
             }
             else {
+                // SlipperyTile の処理で、常に最後の移動方向を覚えておく必要がある
+                this._movingDirection = Input.dir8;
+
                 this.raiseStepEnd();
             }
         }

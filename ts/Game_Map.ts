@@ -69,9 +69,11 @@ Game_Map.prototype.checkPassage = function(x: number, y: number, bit: number): b
         var flag = flags[tiles[i]];
 
         ////////// ガイドラインタグを通行判定から無視する
-        var tag = flags[tiles[i]] >> 12;
-        if (tag == paramGuideLineTerrainTag)
-            continue;
+        if (i < tiles.length - 1) { // 一番下のタイルに直接ガイドラインタグがつけられている場合は無視しない
+            var tag = flags[tiles[i]] >> 12;
+            if (tag == paramGuideLineTerrainTag)
+                continue;
+        }
         //////////
 
         if ((flag & 0x10) !== 0)  // [*] No effect on passage
