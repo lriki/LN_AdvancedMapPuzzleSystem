@@ -363,6 +363,7 @@ Game_CharacterBase.prototype.screenZ = function() {
  * （他オブジェクトと関係して動くものは MovingSequel で定義する）
  */
 Game_CharacterBase.prototype.moveStraightMain = function(d: number) {
+
     this.setMovementSuccess(false);
 
     if (!this.isRidding()) {

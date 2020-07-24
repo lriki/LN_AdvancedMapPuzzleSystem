@@ -64,21 +64,40 @@ Game_CharacterBase.prototype.updateMover = function() {
 
     if ($gameMap.isPuzzleEnabled()) {
         if (this._mover.isInputed && this._mover.isInputed() && this.canAnalogMove()) {
-            if (Input.dir8 == 6 && Math.abs(this._mover._lasPosVec.x() - this._mover._posVec.x()) < thr) {
+            const dx = this._mover._posVec.x() - this._mover._lasPosVec.x();
+            const dy = this._mover._posVec.y() - this._mover._lasPosVec.y();
+
+            if (Input.dir8 == 6 && Math.abs(dx) < thr) {
                 this.moveStraight(6);
             }
-            else if (Input.dir8 == 4 && Math.abs(this._mover._lasPosVec.x() - this._mover._posVec.x()) < thr) {
+            else if (Input.dir8 == 4 && Math.abs(dx) < thr) {
                 this.moveStraight(4);
             }
-            else if (Input.dir8 == 8 && Math.abs(this._mover._lasPosVec.y() - this._mover._posVec.y()) < thr) {
+            else if (Input.dir8 == 8 && Math.abs(dy) < thr) {
                 this.moveStraight(8);
             }
-            else if (Input.dir8 == 2 && Math.abs(this._mover._lasPosVec.y() - this._mover._posVec.y()) < thr) {
+            else if (Input.dir8 == 2 && Math.abs(dy) < thr) {
                 this.moveStraight(2);
             }
             else {
-                // SlipperyTile の処理で、常に最後の移動方向を覚えておく必要がある
-                this._movingDirection = Input.dir8;
+                // SlipperyTile の処理で、常に最後の移動方向を覚えておく必要がある。
+                // 単に Input.dir8 だと斜めで氷上に侵入したときに assert に引っかかるので、4 方向に調整する。
+                if (Math.abs(dx) > Math.abs(dy)) {
+                    if (dx > 0) {
+                        this._movingDirection = 6;
+                    }
+                    else {
+                        this._movingDirection = 4;
+                    }
+                }
+                else {
+                    if (dy > 0) {
+                        this._movingDirection = 2;
+                    }
+                    else {
+                        this._movingDirection = 8;
+                    }
+                }
 
                 this.raiseStepEnd();
             }
