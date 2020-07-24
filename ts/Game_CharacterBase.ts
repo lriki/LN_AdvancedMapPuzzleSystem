@@ -924,8 +924,10 @@ Game_CharacterBase.prototype.updatePlateNotification = function() {
     
     // 感圧板チェック
     if (this.isMovementSucceeded(this.x, this.y)) {
+        console.log("step end isMovementSucceeded");
         const plate = $gameMap.eventsXy(this.x, this.y).find(event => { return event.isPlateType(); });
         if (plate) {
+            console.log("ride?");
             if (plate.objectId() != this.objectId() &&              // 自分自身に乗らないようにする
                 this._riddeePlateCharacterId != plate.objectId() && // 別の Plate へ乗るときだけ
                 !this.isThrough()) {                                // すり抜け確認 (Follower 非表示の対策)
