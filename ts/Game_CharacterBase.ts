@@ -926,10 +926,8 @@ Game_CharacterBase.prototype.updatePlateNotification = function() {
     
     // 感圧板チェック
     if (this.isMovementSucceeded(this.x, this.y)) {
-        console.log("step end isMovementSucceeded");
         const plate = $gameMap.eventsXy(this.x, this.y).find(event => { return event.isPlateType(); });
         if (plate) {
-            console.log("ride?");
             if (plate.objectId() != this.objectId() &&              // 自分自身に乗らないようにする
                 this._riddeePlateCharacterId != plate.objectId() && // 別の Plate へ乗るときだけ
                 !this.isThrough()) {                                // すり抜け確認 (Follower 非表示の対策)
@@ -973,7 +971,18 @@ Game_CharacterBase.prototype.raiseStepEnd = function() {
 
     if (this.isOnSlipperyTile()) {
         $gameTemp.clearDestination();
+
+        // SAN_AnalogMove 用の対策。
+        // オリジナルの Game_CharacterBase.moveStraight が実座標を強制的に四捨五入してくるため、 0.5 タイル分ワープしたように見えてしまう。
+        // 対策として、移動前の実座標を復元することで、次の updateMove などで滑らかに移動できるようにする。
+        const oldRealX = this._realX;
+        const oldRealY = this._realY;
+
         this.moveStraight(this._movingDirection);
+
+        this._realX = oldRealX;
+        this._realY = oldRealY;
+
         if (!this.isMovementSucceeded(this.x, this.y)) {
             // moveStraight の結果、移動できなかったら一連の移動を終了する
             this.raiseStop();
