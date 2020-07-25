@@ -326,8 +326,10 @@ Game_CharacterBase.prototype.isPositionalObject = function(): boolean {
  */
 var _Game_CharacterBase_pattern = Game_CharacterBase.prototype.pattern;
 Game_CharacterBase.prototype.pattern = function() {
-    if (this.isOnSlipperyTile()) {
-        return paramSlippingAnimationPattern;
+    if (!this.isObjectCharacter()) {
+        if (this.isOnSlipperyTile()) {
+            return paramSlippingAnimationPattern;
+        }
     }
     return _Game_CharacterBase_pattern.call(this);
 };
