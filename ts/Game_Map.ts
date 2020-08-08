@@ -104,9 +104,13 @@ Game_Map.prototype.checkNotPassageAll = function(x: number, y: number) {
 // 溝チェック
 Game_Map.prototype.checkGroove = function(x: number, y: number) {
     var tiles = this.allTiles(x, y);
-    for (var i = 0; i < tiles.length; i++) {
+    for (var i = 0; i < tiles.length; i++) {   // tiles はインデックスの小さい方が上層レイヤー
         if (Tilemap.isTileA1(tiles[i])) {
             return true;
+        }
+        else if (tiles[i] > 0) {
+            // A1 タイルの上に何らかの別のタイルがあった場合は、溝扱いしない
+            return false;
         }
     }
     return false;
