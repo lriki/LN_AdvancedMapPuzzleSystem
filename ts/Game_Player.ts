@@ -17,6 +17,12 @@ Game_Player.prototype.isCollided = function(x: number, y: number): boolean {
 
 var _Game_Player_canMove = Game_Player.prototype.canMove;
 Game_Player.prototype.canMove = function(): boolean {
+    if (this.isJumping()) {
+        // ジャンプ中は移動操作を禁止しないと、ジャンプ中に方向入力したときに
+        // executeMove() や moveStraight() が呼ばれてしまうので封印する。
+        // 多分ツクールのバグ。
+        return false;
+    }
     if (this._movingSequel) {
         // 移動制御中のタッチ移動や接触イベント起動を禁止
         return false;
