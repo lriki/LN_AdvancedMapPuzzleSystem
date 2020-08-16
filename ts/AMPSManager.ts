@@ -2,6 +2,8 @@
 
 import { paramMapSkillEffectsMapId } from "./PluginParameters";
 import { Game_AMPSVariables } from "./Game_AMPSVariables";
+import { PlateMovingBehavior, MovingBehavior } from "./MovingBehavior";
+import { BehaviorType } from "./Common";
 
 //var $effectsMapData: IDataMap;
 //var $dataMap          = null;
@@ -40,6 +42,8 @@ DataManager.onLoad = function(object: any) {
 export class AMPSManager
 {
     static gameAMPSVariables: Game_AMPSVariables = new Game_AMPSVariables();
+    static _movingBehaviors: (MovingBehavior | undefined)[] = [undefined, new PlateMovingBehavior()];
+
     
     static tempMapSkillEffectDataId: number = -1;
     static tempMapSkillEffectInvokerId: number = -1;
@@ -74,6 +78,10 @@ export class AMPSManager
             //let mapLoader = ResourceHandler.createLoader('data/' + filename, this.loadDataFile.bind(this, '$dataMap', filename));
             //DataManager.loadDataFile('$dataMap', filename);
         }
+    }
+
+    static behavior(type: BehaviorType): MovingBehavior | undefined {
+        return this._movingBehaviors[type];
     }
 
     static pluginCommand = function(command: string, args: string[]) {

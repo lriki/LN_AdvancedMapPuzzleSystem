@@ -435,8 +435,9 @@ export class MovingHelper {
         if (id == 0) {
             return $gamePlayer;
         }
-        var events = $gameMap.events();
-        return events[id - 1];
+        else {
+            return $gameMap.event(id);
+        }
     }
 
     /**

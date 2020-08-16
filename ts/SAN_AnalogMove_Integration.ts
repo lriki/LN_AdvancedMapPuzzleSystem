@@ -1,5 +1,9 @@
-
-
+/**
+ * 大方針として、オブジェクトに乗っているときなどは AnalogMove を禁止する。
+ * Game_Player.prototype.shouleMoveDefault() 参照。
+ *
+ * AnalogMove 中は moveStraight (AMPS の基本移動処理) を一切行わない。というか行えない。
+ */
 
 import { assert, MovingMode } from './Common'
 
@@ -20,7 +24,6 @@ declare global {
 
     }
 }
-
 
 if (typeof Sanshiro !== 'undefined' && Sanshiro.AnalogMove != undefined) {
 
@@ -47,7 +50,7 @@ PlayerMover.prototype.update = function() {
 
 /**
  * SAN_AnalogMove.js の移動処理の後、移動できなかった場合は AMPS の移動処理を実施してみる。
- * 移動できなかったことの検出には、「速度ベクトルが十分に小さい場合」を判定基準とする。
+ * 移動できなかったことの検出には、isInputed(キーが押されているか) と「速度ベクトルが十分に小さい場合」を判定基準とする。
  * 
  * 壁に接触するときは速度ベクトルが 0 になるが、イベントに対しては SAN_AnalogMove.js は円柱のようなヒットボックスを用意しているため、
  * イベントとプレイヤーの座標が完全一致していない場合わずかに速度ベクトルが発生する。
@@ -62,17 +65,50 @@ Game_CharacterBase.prototype.updateMover = function() {
 
     if ($gameMap.isPuzzleEnabled()) {
         if (this._mover.isInputed && this._mover.isInputed() && this.canAnalogMove()) {
-            if (Input.dir8 == 6 && Math.abs(this._mover._lasPosVec.x() - this._mover._posVec.x()) < thr) {
+            const dx = this._mover._posVec.x() - this._mover._lasPosVec.x();
+            const dy = this._mover._posVec.y() - this._mover._lasPosVec.y();
+
+            // SAN_AanalogMove は _movementSuccess フラグを一切操作しない。
+            // そのため AMPS 側で一度 false にすると、以降通常移動時は false のままとなり、
+            // 感圧板の乗降処理などが行われなくなる。 (見た目は移動できているのに、フラグは常に false)
+            // 対策として、座標さ分が少しでもあれば移動が行われたとみなしてフラグを復帰させる。
+            if (dx !== 0 || dy !== 0) {
+                this.setMovementSuccess(true);
+            }
+            
+            if (Input.dir8 == 6 && Math.abs(dx) < thr) {
                 this.moveStraight(6);
             }
-            if (Input.dir8 == 4 && Math.abs(this._mover._lasPosVec.x() - this._mover._posVec.x()) < thr) {
+            else if (Input.dir8 == 4 && Math.abs(dx) < thr) {
                 this.moveStraight(4);
             }
-            if (Input.dir8 == 8 && Math.abs(this._mover._lasPosVec.y() - this._mover._posVec.y()) < thr) {
+            else if (Input.dir8 == 8 && Math.abs(dy) < thr) {
                 this.moveStraight(8);
             }
-            if (Input.dir8 == 2 && Math.abs(this._mover._lasPosVec.y() - this._mover._posVec.y()) < thr) {
+            else if (Input.dir8 == 2 && Math.abs(dy) < thr) {
                 this.moveStraight(2);
+            }
+            else {
+                // SlipperyTile の処理で、常に最後の移動方向を覚えておく必要がある。
+                // 単に Input.dir8 だと斜めで氷上に侵入したときに assert に引っかかるので、4 方向に調整する。
+                if (Math.abs(dx) > Math.abs(dy)) {
+                    if (dx > 0) {
+                        this._movingDirection = 6;
+                    }
+                    else {
+                        this._movingDirection = 4;
+                    }
+                }
+                else {
+                    if (dy > 0) {
+                        this._movingDirection = 2;
+                    }
+                    else {
+                        this._movingDirection = 8;
+                    }
+                }
+
+                this.raiseStepEnd();
             }
         }
     }

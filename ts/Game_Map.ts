@@ -1,5 +1,5 @@
 /// <reference types="rpgmakermv_typescript_dts"/>
-import { paramMapSkillEffectsMapId, paramGuideLineTerrainTag, paramAllowAllMapPuzzles, paramSlipRegion } from './PluginParameters'
+import { paramMapSkillEffectsMapId, paramGuideLineTerrainTag, paramAllowAllMapPuzzles, paramSlipperyTileRegionId } from './PluginParameters'
 import { AMPSManager } from './AMPSManager'
 import { assert } from './Common';
 import { Game_AMPSVariables, ObjectPosition } from './Game_AMPSVariables';
@@ -69,9 +69,11 @@ Game_Map.prototype.checkPassage = function(x: number, y: number, bit: number): b
         var flag = flags[tiles[i]];
 
         ////////// ガイドラインタグを通行判定から無視する
-        var tag = flags[tiles[i]] >> 12;
-        if (tag == paramGuideLineTerrainTag)
-            continue;
+        if (i < tiles.length - 1) { // 一番下のタイルに直接ガイドラインタグがつけられている場合は無視しない
+            var tag = flags[tiles[i]] >> 12;
+            if (tag == paramGuideLineTerrainTag)
+                continue;
+        }
         //////////
 
         if ((flag & 0x10) !== 0)  // [*] No effect on passage
@@ -102,9 +104,13 @@ Game_Map.prototype.checkNotPassageAll = function(x: number, y: number) {
 // 溝チェック
 Game_Map.prototype.checkGroove = function(x: number, y: number) {
     var tiles = this.allTiles(x, y);
-    for (var i = 0; i < tiles.length; i++) {
+    for (var i = 0; i < tiles.length; i++) {   // tiles はインデックスの小さい方が上層レイヤー
         if (Tilemap.isTileA1(tiles[i])) {
             return true;
+        }
+        else if (tiles[i] > 0) {
+            // A1 タイルの上に何らかの別のタイルがあった場合は、溝扱いしない
+            return false;
         }
     }
     return false;
@@ -168,28 +174,28 @@ Game_Map.prototype.setDespawnMapSkillEffectEventHandler = function(callback: (ev
  * 滑りタイルかどうか
  */
 Game_Map.prototype.isSlipperyTile = function(x: number, y: number): boolean {
-    return (paramSlipRegion !== 0 && this.regionId(x, y) === paramSlipRegion);
+    return (paramSlipperyTileRegionId !== 0 && this.regionId(x, y) === paramSlipperyTileRegionId);
 }
 
 Game_Map.prototype.savePositionalObjects = function() {
-    console.log("savePositionalObjects", AMPSManager.gameAMPSVariables);
+    //console.log("savePositionalObjects", AMPSManager.gameAMPSVariables);
     this.events().forEach((event) => {
         if (event.isPositionalObject()) {
             let pos: ObjectPosition = { x: event.x, y: event.y };
             AMPSManager.gameAMPSVariables.setSavedPosition(this.mapId(), event.eventId(), pos);
-            console.log("saved", event.eventId(), pos);
+            //console.log("saved", event.eventId(), pos);
         }
     });
 }
 
 Game_Map.prototype.loadPositionalObjects = function() {
-    console.log("loadPositionalObjects", AMPSManager.gameAMPSVariables);
+    //console.log("loadPositionalObjects", AMPSManager.gameAMPSVariables);
     this.events().forEach((event) => {
         if (event.isPositionalObject()) {
             const pos = AMPSManager.gameAMPSVariables.savedPosition(this.mapId(), event.eventId());
             if (pos) {
                 event.locate(pos.x, pos.y);
-                console.log("loaded", event.eventId(), pos);
+                //console.log("loaded", event.eventId(), pos);
             }
         }
     });

@@ -15,11 +15,13 @@
  * 
  */
 
-import { assert, MovingMode } from './Common'
+import { assert, MovingMode, BehaviorType } from './Common'
 import { MovingHelper } from './MovingHelper'
 import { AMPS_SoundManager } from "./SoundManager";
 import { MovingSequel, MovingSequel_PushMoving } from "./MovingSequel";
 import { paramGuideLineTerrainTag, paramFallingSpeed, paramSlippingAnimationPattern } from './PluginParameters';
+import { MovingBehavior } from './MovingBehavior';
+import { AMPSManager } from './AMPSManager';
 
 const JUMP_WAIT_COUNT   = 10;
 
@@ -33,11 +35,16 @@ declare global {
     interface Game_CharacterBase {
         // ObjectType
         _objectTypeBox: boolean;
+        _objectTypePlate: boolean;
         _objectTypeEffect: boolean;
         _objectTypeReactor: boolean;
+        //_movingBehavior: MovingBehavior | undefined;
+        _movingBehaviorType: BehaviorType;
+        _movingBehaviorData: any;   // FIXME: _movingBehavior に含めるとシリアライズするときに都合が悪い。TypeScript から class シリアライズの上手い方法見つかればいいけど…。
 
         _ridderCharacterId: number; // this に乗っているオブジェクト (this の上にあるオブジェクト)
         _riddeeCharacterId: number; // this が乗っているオブジェクと (this の下にあるオブジェクト)
+        _riddeePlateCharacterId: number; // this が乗っている Plate (this の下にあるオブジェクト)
         _waitAfterJump: number;
         _extraJumping: boolean;     // AMPS によるジャンプかどうか。見た目上の問題を修正するため微調整を入れたりする。
         _ridingScreenZPriority: number;
@@ -45,6 +52,8 @@ declare global {
         _movingDirection: number;   // 自動移動の際の移動方向。滑りタイル状で向き固定のまま移動したりする。
         _forcePositionAdjustment: boolean;  // moveToDir 移動時、移動先位置を強制的に round するかどうか（半歩移動の封印）
 
+        _moveToPlateEnter: boolean;    // 現在の移動ステップが終わったら MovingBehavior に通知する
+        _moveToPlateLeave: number;    // 現在の移動ステップが終わったら MovingBehavior に通知する
         _moveToFalling: boolean;    // 現在の移動ステップが終わったら落下する
         _fallingState: FallingState;
         _fallingOriginalSpeed: number;
@@ -63,6 +72,7 @@ declare global {
         isRidding(): boolean;
         isMapObject(): boolean;
         isBoxType(): boolean;
+        isPlateType(): boolean;
         isEffectType(): boolean;
         isReactorType(): boolean;
         objectId(): number;
@@ -96,6 +106,7 @@ declare global {
         updateFall(): void;
         updateSlippery(): void;
         resetGetOnOffParams(): void;
+        updatePlateNotification(): void;
 
         raiseStepEnd(): void;
         raiseStop(): void;
@@ -110,14 +121,20 @@ declare global {
     }
 }
 
+//------------------------------------------------------------------------------
+// Overrides
+
 var _Game_CharacterBase_initMembers = Game_CharacterBase.prototype.initMembers;
 Game_CharacterBase.prototype.initMembers = function() {
     _Game_CharacterBase_initMembers.call(this);
     this._objectTypeBox = false;
+    this._objectTypePlate = false;
     this._objectTypeEffect = false;
     this._objectTypeReactor = false;
+    this._movingBehaviorType = BehaviorType.None;
     this._ridderCharacterId = -1;
     this._riddeeCharacterId = -1;
+    this._riddeePlateCharacterId = -1;
     this._waitAfterJump = 0;
     this._extraJumping = false;
     this._ridingScreenZPriority = -1;
@@ -125,6 +142,8 @@ Game_CharacterBase.prototype.initMembers = function() {
     this._movingDirection = 0;
     this._forcePositionAdjustment = false;
 
+    this._moveToPlateEnter = false;
+    this._moveToPlateLeave = -1;
     this._moveToFalling = false;
     this._fallingState = FallingState.None;
     this._fallingOriginalSpeed = 0;
@@ -148,11 +167,6 @@ Game_CharacterBase.prototype.moveStraight = function (d: number) {
     if ($gameMap.isPuzzleEnabled()) {
         assert(d == 2 || d == 4 || d == 6 || d == 8);
         
-        if (this._waitAfterJump > 0) {
-            this._waitAfterJump--;
-            return;
-        }
-    
         if (MovingSequel_PushMoving.tryStartPushObjectAndMove(this, d)) {
             return;
         }
@@ -179,6 +193,17 @@ Game_CharacterBase.prototype.moveDiagonally = function (horz: number, vert: numb
     }
 };
 
+var _Game_CharacterBase_isThrough = Game_CharacterBase.prototype.isThrough;
+Game_CharacterBase.prototype.isThrough = function() {
+    if (this.isPlateType()) {
+        return true;    // Plate は常に通行可能
+    }
+    return _Game_CharacterBase_isThrough.call(this);
+};
+
+//------------------------------------------------------------------------------
+// 
+
 /**
  * 別のオブジェクトに乗っているか？
  * 
@@ -193,13 +218,16 @@ Game_CharacterBase.prototype.isRidding = function(): boolean {
 Game_CharacterBase.prototype.isMapObject = function() {
     return this.isBoxType() || this.isEffectType() || this.isReactorType();
 };
-Game_CharacterBase.prototype.isBoxType = function(): boolean  {
+Game_CharacterBase.prototype.isBoxType = function(): boolean {
     return this._objectTypeBox;
 };
-Game_CharacterBase.prototype.isEffectType = function(): boolean  {
+Game_CharacterBase.prototype.isPlateType = function(): boolean {
+    return this._objectTypePlate;
+};
+Game_CharacterBase.prototype.isEffectType = function(): boolean {
     return this._objectTypeEffect;
 };
-Game_CharacterBase.prototype.isReactorType = function(): boolean  {
+Game_CharacterBase.prototype.isReactorType = function(): boolean {
     return this._objectTypeReactor;
 };
 
@@ -298,15 +326,23 @@ Game_CharacterBase.prototype.isPositionalObject = function(): boolean {
  */
 var _Game_CharacterBase_pattern = Game_CharacterBase.prototype.pattern;
 Game_CharacterBase.prototype.pattern = function() {
-    if (this.isOnSlipperyTile()) {
-        return paramSlippingAnimationPattern;
+    if (!this.isObjectCharacter()) {
+        if (this.isOnSlipperyTile()) {
+            return paramSlippingAnimationPattern;
+        }
     }
     return _Game_CharacterBase_pattern.call(this);
 };
 
 var _Game_CharacterBase_screenZ = Game_CharacterBase.prototype.screenZ;
 Game_CharacterBase.prototype.screenZ = function() {
+
     var base = _Game_CharacterBase_screenZ.call(this);
+    if (this.isPlateType()) {
+        base -= (this._priorityType) * 2;
+    }
+
+
     var riddingObject = this.riddingObject();
     if (this.isRidding() && riddingObject) {
         base += riddingObject.screenZ();
@@ -329,7 +365,6 @@ Game_CharacterBase.prototype.screenZ = function() {
  * （他オブジェクトと関係して動くものは MovingSequel で定義する）
  */
 Game_CharacterBase.prototype.moveStraightMain = function(d: number) {
-
 
     this.setMovementSuccess(false);
 
@@ -704,7 +739,16 @@ Game_CharacterBase.prototype.update = function() {
         }
     }
 
-    _Game_CharacterBase_update.call(this);
+    if (this._waitAfterJump > 0) {
+        // ジャンプ後にわずかな待ち時間を取ることで、着地した "手ごたえ" を演出するためのウェイト。
+        // このウェイト中は stop と似た扱いなのだが、updateStop() に処理を回してしまうと、
+        // 移動ルート強制されているキャラクターが次のインデックスに進んでしまう。
+        // 丁寧にやるなら updateWait() みたいなのを用意したいところだが、ひとまずは待つだけなので、単純な if で対策する。
+        this._waitAfterJump--;
+    }
+    else {
+        _Game_CharacterBase_update.call(this);
+    }
 
     if (this.isFalling()) {
         this.updateFall();
@@ -719,6 +763,11 @@ Game_CharacterBase.prototype.update = function() {
             this._realX = obj._realX;
             this._realY = obj._realY - (obj.objectHeight());
         }
+    }
+
+    const behavior = AMPSManager.behavior(this._movingBehaviorType);
+    if (behavior) {
+        behavior.onUpdate(this);
     }
 }
 
@@ -872,15 +921,68 @@ Game_CharacterBase.prototype.resetGetOnOffParams = function() {
     this._getonoffStartY = this._realY;
 }
 
+
+Game_CharacterBase.prototype.updatePlateNotification = function() {
+    
+    // 感圧板チェック
+    if (this.isMovementSucceeded(this.x, this.y)) {
+        const plate = $gameMap.eventsXy(this.x, this.y).find(event => { return event.isPlateType(); });
+        if (plate) {
+            if (plate.objectId() != this.objectId() &&              // 自分自身に乗らないようにする
+                this._riddeePlateCharacterId != plate.objectId() && // 別の Plate へ乗るときだけ
+                !this.isThrough()) {                                // すり抜け確認 (Follower 非表示の対策)
+                this._riddeePlateCharacterId = plate.objectId();
+                this._moveToPlateEnter = true;
+            }
+        }
+        else if (this._riddeePlateCharacterId != -1) {
+            // 降りるとき
+            this._moveToPlateLeave = this._riddeePlateCharacterId;
+            this._riddeePlateCharacterId = -1;
+        }
+    }
+
+    if (this._moveToPlateLeave >= 0) {
+        const plate = MovingHelper.getCharacterById(this._moveToPlateLeave);
+        const behavior = AMPSManager.behavior(plate._movingBehaviorType);
+        if (behavior) {
+            behavior.onRidderLeaved(plate, this);
+        }
+        this._moveToPlateLeave = -1;
+    }
+    if (this._moveToPlateEnter) {
+        const plate = MovingHelper.getCharacterById(this._riddeePlateCharacterId);
+        const behavior = AMPSManager.behavior(plate._movingBehaviorType);
+        if (behavior) {
+            behavior.onRidderEnterd(plate, this);
+        }
+        this._moveToPlateEnter = false;
+    }
+}
+
 //------------------------------------------------------------------------------
 // タイミング発火
 
 Game_CharacterBase.prototype.raiseStepEnd = function() {
     this.onStepEnd();
 
+    this.updatePlateNotification();
+
+
     if (this.isOnSlipperyTile()) {
         $gameTemp.clearDestination();
+
+        // SAN_AnalogMove 用の対策。
+        // オリジナルの Game_CharacterBase.moveStraight が実座標を強制的に四捨五入してくるため、 0.5 タイル分ワープしたように見えてしまう。
+        // 対策として、移動前の実座標を復元することで、次の updateMove などで滑らかに移動できるようにする。
+        const oldRealX = this._realX;
+        const oldRealY = this._realY;
+
         this.moveStraight(this._movingDirection);
+
+        this._realX = oldRealX;
+        this._realY = oldRealY;
+
         if (!this.isMovementSucceeded(this.x, this.y)) {
             // moveStraight の結果、移動できなかったら一連の移動を終了する
             this.raiseStop();

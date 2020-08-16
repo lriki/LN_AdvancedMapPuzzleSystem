@@ -1,8 +1,9 @@
 /// <reference types="rpgmakermv_typescript_dts"/>
 import { paramMapSkillEffectsMapId } from './PluginParameters'
-import { EventTrigger, strToEventTrigger, assert } from './Common'
+import { EventTrigger, strToEventTrigger, assert, BehaviorType } from './Common'
 import { AMPSManager } from './AMPSManager';
 import { MovingHelper } from './MovingHelper';
+import { PlateMovingBehavior } from './MovingBehavior';
 
 enum MapSkillEffectInitialPosition {
     // 発動者と同じ位置
@@ -37,6 +38,7 @@ declare global {
 
         clearMapObjectSettings(): void;
         //objectType(): ObjectType;
+        mapObjectEventTrigger(): EventTrigger;
         isDynamicMapEffectEvent(): boolean;
         reactionMapSkill(): string;
         mapSkillEffectInvoker(): Game_Character | undefined;
@@ -147,6 +149,10 @@ Game_Event.prototype.isFallable = function(): boolean {
     return this._fallable;
 };
 
+Game_Event.prototype.mapObjectEventTrigger = function(): EventTrigger {
+    return this._mapObjectEventTrigger;
+};
+
 Game_Event.prototype.isDynamicMapEffectEvent = function(): boolean {
     return this._mapId === paramMapSkillEffectsMapId && this._mapSkillEffectDataId >= 0;
 };
@@ -202,6 +208,7 @@ var _Game_Event_setupPage = Game_Event.prototype.setupPage;
 Game_Event.prototype.setupPage = function() {
     let oldHeight = this.objectHeight();
     let oldRider = this.rider();
+    let oldObjectType = this.isPlateType(); // TODO: このへん bool じゃなくて enum のほうがいいかも
 
     _Game_Event_setupPage.call(this);
     
@@ -218,6 +225,14 @@ Game_Event.prototype.setupPage = function() {
                 target.startAsReactor();
             }
         }
+    }
+
+    if (this.isPlateType() != oldObjectType && this.isPlateType()) {
+        this._movingBehaviorType = BehaviorType.Plate;
+        AMPSManager.behavior(this._movingBehaviorType)?.onAttach(this);
+    }
+    else if (!this.isPlateType()) {
+        this._movingBehaviorType = BehaviorType.None;
     }
 }
 
@@ -287,6 +302,9 @@ Game_Event.prototype.parseListCommentForAMPSObject = function(): boolean {
                             break;
                         case "box":
                             this._objectTypeBox = (tokens.length >= 2) ? Boolean(tokens[1].trim()) : true;
+                            break;
+                        case "plate":
+                            this._objectTypePlate = (tokens.length >= 2) ? Boolean(tokens[1].trim()) : true;
                             break;
                         case "effect":
                             this._objectTypeEffect = (tokens.length >= 2) ? Boolean(tokens[1].trim()) : true;

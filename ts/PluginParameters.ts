@@ -17,7 +17,10 @@ if (localAllowAllMapPuzzles != undefined) {
     paramAllowAllMapPuzzles = (localAllowAllMapPuzzles.toLowerCase() === 'true');
 }
 
+// 滑る床リージョン ID
+export var paramSlipperyTileRegionId = Number(PluginManager.parameters(pluginName)['SlipperyTileRegionId']);
+// = 1;
 
-export var paramSlipRegion = 1;
-
-export var paramSlippingAnimationPattern = 2;
+// 滑り中のアニメーションパターン
+export var paramSlippingAnimationPattern = Number(PluginManager.parameters(pluginName)['SlippingAnimationPattern']);
+// = 2;

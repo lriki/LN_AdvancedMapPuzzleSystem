@@ -10,7 +10,7 @@
 //=============================================================================
 
 /*:ja
- * @plugindesc 謎解きマップシステムプラグイン v0.5.0
+ * @plugindesc 謎解きマップシステムプラグイン v6.0.0
  * @author lriki
  *
  * @help マップ上のキャラクター移動やイベントシステムを拡張し、謎解きの幅を広げるための様々な機能を追加します。
@@ -31,8 +31,18 @@
  * 
  * @param AllowAllMapPuzzles
  * @desc エリアタイプのすべてのマップで、謎解きシステムを有効にするかどうかを設定します。 false にした場合、規定ではすべてのマップで無効となり、マップのメモ欄に <LNPuzzleEnable> と記入したマップだけ有効になります。
- * @default true
  * @type boolean
+ * @default true
+ * 
+ * @param SlipperyTileRegionId
+ * @desc 滑る床として扱うリージョン ID です。
+ * @type number
+ * @default 1
+ * 
+ * @param SlippingAnimationPattern
+ * @desc 滑る床の上で移動している時のキャラクターのアニメーションパターン番号です。
+ * @type number
+ * @default 2
  * 
  * MIT License
  */
