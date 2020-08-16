@@ -13,7 +13,7 @@ English document in process: [English page](README.en_US.md)
 
 | Version | File |
 |---------|------|
-| v0.5.0  | [:arrow_down: LN_AdvancedMapPuzzleSystem.js](https://raw.githubusercontent.com/lriki/LN_AdvancedMapPuzzleSystem/master/js/plugins/LN_AdvancedMapPuzzleSystem.js) |
+| v6.0.0  | [:arrow_down: LN_AdvancedMapPuzzleSystem.js](https://raw.githubusercontent.com/lriki/LN_AdvancedMapPuzzleSystem/master/js/plugins/LN_AdvancedMapPuzzleSystem.js) |
 
 
 ----------
@@ -58,6 +58,7 @@ RPG ツクール MV で新規プロジェクトを作成し、[:arrow_down: こ�
 3. [キャラクター移動の拡張](#キャラクター移動の拡張)
     1. [1マス分のホールタイルのジャンプ](#1マス分のホールタイルのジャンプ)
     2. [1マス分のエッジタイル間のジャンプ](#1マス分のエッジタイル間のジャンプ)
+    3. [滑る床](#滑る床) ![ToDo](http://img.shields.io/badge/6.0.0-New-green.svg?style=flat)
 4. [マップオブジェクト](#マップオブジェクト-1)
     1. [マップオブジェクトの作り方](#マップオブジェクトの作り方)
 5. [マップオブジェクト - 箱](#マップオブジェクト---箱)
@@ -71,9 +72,8 @@ RPG ツクール MV で新規プロジェクトを作成し、[:arrow_down: こ�
     8. [箱オブジェクト落下時のイベント起動](#箱オブジェクト落下時のイベント起動)
     9. [プレイヤーの乗降によるイベントの起動](#プレイヤーの乗降によるイベントの起動)
     10. [マップオブジェクトの位置の永続化](#マップオブジェクトの位置の永続化)
-6. [マップオブジェクト - スイッチ](#マップオブジェクト---スイッチ)
-    1. [パラメータ](#パラメータ-1)
-    2. [キャラクターの乗降によるイベントの起動](#キャラクターの乗降によるイベントの起動)
+6. [マップオブジェクト - 感圧板](#マップオブジェクト---感圧板) ![ToDo](http://img.shields.io/badge/6.0.0-New-green.svg?style=flat)
+    1. [キャラクターの乗降によるイベントの起動](#キャラクターの乗降によるイベントの起動)
 7. [マップオブジェクト - 丸太](#マップオブジェクト---丸太)
     1. [パラメータ](#パラメータ-2)
     2. [丸太タイプマップオブジェクトの移動](#丸太タイプマップオブジェクトの移動)
@@ -181,6 +181,14 @@ RPG ツクール MV で新規プロジェクトを作成し、[:arrow_down: こ�
 :warning: なお、単純に向かい合っているかどうかで判断するため、見かけ上の位置や高さが違う場所へジャンプできてしまう点に注意してください。
 
 ![](docs/img/8.gif)
+
+### 滑る床
+
+リージョンID=1 のタイルは滑る床となります。（プラグインパラメータの SlipperyTileRegionId で変更できます）
+
+この上でキャラクターが移動すると、通常の床や障害物にぶつかるまで前進を続けます。
+
+![](docs/img/24.gif)
 
 
 ## マップオブジェクト
@@ -307,18 +315,49 @@ RPG ツクール MV で新規プロジェクトを作成し、[:arrow_down: こ�
 ![](docs/img/20.png)
 
 
-## マップオブジェクト - Plate (感圧板)
+## マップオブジェクト - 感圧板
 
-- Plate は常に "すり抜け" がON です。
-- Plate の見た目上のプライオリティは常に "通常キャラの下" になります。
+![](docs/img/23.gif)
 
-### パラメータ
+感圧板はキャラクターが上に乗った時と降りた時にイベントを起動できるマップオブジェクトです。
 
-![ToDo](http://img.shields.io/badge/status-ToDo-red.svg?style=flat)
+感圧板を作成するには、次のようにパラメータとして `plate` を指定します。
+
+```
+@MapObject {
+  plate,
+}
+```
+
+- 感圧板 は常に "すり抜け" がON です。
+- 感圧板 の見た目上のプライオリティは常に "通常キャラの下" になります。
 
 ### キャラクターの乗降によるイベントの起動
 
-![ToDo](http://img.shields.io/badge/status-ToDo-red.svg?style=flat)
+次のように、乗った時と降りた時のイベントページをそれぞれ作成し、パラメータに `trigger:onRideOnEvent` または `trigger:onRideOffEvent` を指定します。
+
+![](docs/img/21.png)
+
+![](docs/img/22.png)
+
+乗った時にイベントを起動する：
+
+```
+@MapObject {
+  plate,
+  trigger:onRideOnEvent,
+}
+```
+
+降りた時にイベントを起動する：
+
+```
+@MapObject {
+  plate,
+  trigger:onRideOffEvent,
+}
+```
+
 
 
 ## マップオブジェクト - 丸太
