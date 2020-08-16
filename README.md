@@ -13,7 +13,7 @@ English document in process: [English page](README.en_US.md)
 
 | Version | File |
 |---------|------|
-| v6.0.0  | [:arrow_down: LN_AdvancedMapPuzzleSystem.js](https://raw.githubusercontent.com/lriki/LN_AdvancedMapPuzzleSystem/master/js/plugins/LN_AdvancedMapPuzzleSystem.js) |
+| v0.6.0  | [:arrow_down: LN_AdvancedMapPuzzleSystem.js](https://raw.githubusercontent.com/lriki/LN_AdvancedMapPuzzleSystem/master/js/plugins/LN_AdvancedMapPuzzleSystem.js) |
 
 
 ----------
@@ -58,7 +58,7 @@ RPG ツクール MV で新規プロジェクトを作成し、[:arrow_down: こ�
 3. [キャラクター移動の拡張](#キャラクター移動の拡張)
     1. [1マス分のホールタイルのジャンプ](#1マス分のホールタイルのジャンプ)
     2. [1マス分のエッジタイル間のジャンプ](#1マス分のエッジタイル間のジャンプ)
-    3. [滑る床](#滑る床) ![ToDo](http://img.shields.io/badge/6.0.0-New-green.svg?style=flat)
+    3. [滑る床](#滑る床) ![ToDo](http://img.shields.io/badge/0.6.0-New-green.svg?style=flat)
 4. [マップオブジェクト](#マップオブジェクト-1)
     1. [マップオブジェクトの作り方](#マップオブジェクトの作り方)
 5. [マップオブジェクト - 箱](#マップオブジェクト---箱)
@@ -72,7 +72,7 @@ RPG ツクール MV で新規プロジェクトを作成し、[:arrow_down: こ�
     8. [箱オブジェクト落下時のイベント起動](#箱オブジェクト落下時のイベント起動)
     9. [プレイヤーの乗降によるイベントの起動](#プレイヤーの乗降によるイベントの起動)
     10. [マップオブジェクトの位置の永続化](#マップオブジェクトの位置の永続化)
-6. [マップオブジェクト - 感圧板](#マップオブジェクト---感圧板) ![ToDo](http://img.shields.io/badge/6.0.0-New-green.svg?style=flat)
+6. [マップオブジェクト - 感圧板](#マップオブジェクト---感圧板) ![ToDo](http://img.shields.io/badge/0.6.0-New-green.svg?style=flat)
     1. [キャラクターの乗降によるイベントの起動](#キャラクターの乗降によるイベントの起動)
 7. [マップオブジェクト - 丸太](#マップオブジェクト---丸太)
     1. [パラメータ](#パラメータ-2)
