@@ -59,7 +59,6 @@ export class PlateMovingBehavior extends MovingBehavior {
     onUpdate(self: Game_CharacterBase) {
         let data = self._movingBehaviorData as PlateMovingBehaviorData;
         if (data.isModified) {
-            console.log("isModified", data);
             if (!data.isPushing) {
                 if (data.riddingObjects.length > 0) {
                     // 押されていないが、乗っているオブジェクトがあるので押されている状態にする。

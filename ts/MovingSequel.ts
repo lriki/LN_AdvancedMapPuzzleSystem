@@ -147,6 +147,9 @@ export class MovingSequel_PushMoving extends MovingSequel {
                 // 押す側の移動処理は終わったことにして、Box の移動終了とともに detach できるようにする
                 behavior.onOwnerStepEnding(character);
 
+                // HalfMove との競合対策。押した方向を向くようにする。
+                character.setDirection(d);
+
                 return true;
             }
             else {
